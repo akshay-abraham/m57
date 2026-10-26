@@ -1,0 +1,60 @@
+name: Prepare a signed release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version, e.g. 0.7.0 (without v)'
+        required: true
+        type: string
+      notes:
+        description: 'Optional release notes; a commit changelog is also generated'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m57-prepare-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Prepare version and notes
+        env:
+          M57_NEXT_VERSION: ${{ inputs.version }}
+          M57_RELEASE_NOTES: ${{ inputs.notes }}
+        run: |
+          printf '%s' "$M57_RELEASE_NOTES" > "$RUNNER_TEMP/m57-notes.md"
+          python3 scripts/prepare-release.py "$M57_NEXT_VERSION" --notes-file "$RUNNER_TEMP/m57-notes.md"
+          python3 scripts/check-release.py "v$M57_NEXT_VERSION"
+      - name: Commit and tag the prepared source
+        env:
+          M57_NEXT_VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add app/build.gradle.kts "docs/releases/$M57_NEXT_VERSION.md"
+          git commit -m "Release M57 $M57_NEXT_VERSION"
+          git tag -a "v$M57_NEXT_VERSION" -m "M57 $M57_NEXT_VERSION"
+          git push --atomic origin HEAD:main "refs/tags/v$M57_NEXT_VERSION"
+      - name: Start signed APK pipeline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          M57_NEXT_VERSION: ${{ inputs.version }}
+        # Tags pushed by GITHUB_TOKEN do not trigger another push workflow.
+        # An explicit workflow_dispatch runs the existing signed release job.
+        run: gh workflow run release.yml --ref "v$M57_NEXT_VERSION"

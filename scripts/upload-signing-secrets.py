@@ -3,6 +3,7 @@
 import argparse
 import base64
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -27,6 +28,10 @@ values = {
     'M57_KEY_PASSWORD': config['keyPassword'],
     'M57_SIGNER_SHA256': fingerprint,
 }
+env = os.environ.copy()
+env.update({name: value for name, value in values.items() if name != 'M57_KEYSTORE_BASE64'})
+env['M57_KEYSTORE'] = config['keystore']
+subprocess.run(['python3', str(Path(__file__).with_name('signing-material.py'))], env=env, check=True)
 for name, value in values.items():
     subprocess.run(['gh', 'secret', 'set', name, '--repo', args.repository], input=value.encode('utf-8'), check=True)
     print(f'Configured {name}')

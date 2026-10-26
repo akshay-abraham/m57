@@ -3,6 +3,7 @@ name: Signed M57 release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,6 +14,7 @@ concurrency:
 
 jobs:
   release:
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -25,27 +27,35 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Validate tag and release notes
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          python3 scripts/check-release.py "$RELEASE_TAG"
+      - name: Restore and verify established signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.M57_KEYSTORE_BASE64 }}
+          M57_KEYSTORE: ${{ runner.temp }}/m57-release.jks
+          M57_STORE_PASSWORD: ${{ secrets.M57_STORE_PASSWORD }}
+          M57_KEY_ALIAS: ${{ secrets.M57_KEY_ALIAS }}
+          M57_KEY_PASSWORD: ${{ secrets.M57_KEY_PASSWORD }}
+          M57_SIGNER_SHA256: ${{ secrets.M57_SIGNER_SHA256 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo 'Configure M57 signing secrets before releasing.'; exit 1; }
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$M57_KEYSTORE"
+          python3 scripts/signing-material.py
       - uses: android-actions/setup-android@v3
         with:
           packages: platform-tools
       - uses: gradle/actions/setup-gradle@v4
-      - name: Validate tag and release notes
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: python3 scripts/check-release.py "$RELEASE_TAG"
       - name: Install Android SDK
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Test, lint and build debug variant
         env:
           M57_SOURCE_REF: ${{ github.sha }}
         run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon
-      - name: Restore private signing key
-        env:
-          KEYSTORE_BASE64: ${{ secrets.M57_KEYSTORE_BASE64 }}
-        run: |
-          test -n "$KEYSTORE_BASE64" || { echo 'Configure M57 signing secrets before pushing release tags.'; exit 1; }
-          umask 077
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/m57-release.jks"
       - name: Build signed release
         env:
           M57_SOURCE_REF: ${{ github.sha }}
@@ -75,7 +85,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           gh release create "$RELEASE_TAG" dist/*.apk dist/*-source.tar.gz dist/SHA256SUMS dist/SIGNING.txt dist/LICENSE dist/NOTICE dist/LICENSING.md \
-            --verify-tag --prerelease --title "M57 $RELEASE_TAG" --notes-file "docs/releases/${RELEASE_TAG#v}.md"
+            --verify-tag --prerelease --generate-notes --title "M57 $RELEASE_TAG" --notes-file "docs/releases/${RELEASE_TAG#v}.md"
       - name: Remove signing material
         if: always()
         run: rm -f "$RUNNER_TEMP/m57-release.jks"

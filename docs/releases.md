@@ -1,8 +1,26 @@
 # Building and publishing M57
 
-The public repository is intended to be `akshay-abraham/m57`. Repository creation
-and a successful Actions run must be confirmed separately; these files alone do
-not mean an APK has been built or published.
+The public repository is `akshay-abraham/m57`. Akshay created it and ran the
+initial workflows. Signed publication is complete only after the release job
+passes and its APK/source assets appear in GitHub Releases.
+
+## Simple local signed build
+
+```sh
+cd ~/m57
+python3 scripts/build-release.py --log m57-release.log
+```
+
+This uses the saved private key, checks its certificate, runs debug/release tests
+and lint, builds the signed release APK and verifies it again. Source changes
+must be committed first. A successful run writes the APK, exact source archive,
+certificate and checksums under `dist/v<version>/`. No password is printed or
+committed. Failures stop publication; an old/unsigned artifact is not substituted.
+
+Signing is the app's update identity: keep the same private key for future APKs.
+The saved key is independent of the administrator password inside M57. Losing
+the signing key prevents compatible updates to existing release installations;
+keep a private backup of the signing directory. No account recovery is added.
 
 ## Local checks
 
@@ -86,7 +104,35 @@ release. The release workflow requires secrets and verifies the APK signature
 and expected certificate before publishing. Signing material is restored only
 on the tag job and removed afterwards; pull-request checks receive none of it.
 
-## Tag releases
+## Release from the GitHub website
+
+One time, after pushing the workflows, upload the established key privately:
+
+```sh
+python3 scripts/upload-signing-secrets.py --repository akshay-abraham/m57
+```
+
+Then open **Actions → Prepare a signed release → Run workflow**, select `main`,
+enter a version greater than the current one (for example `0.6.3` after `0.6.2`)
+and optional notes. The job increments Android versionCode, writes notes without
+overwriting existing files, commits to main and atomically pushes its new tag.
+It explicitly dispatches the signed pipeline, because tags pushed with the
+built-in GitHub token do not trigger another push workflow.
+
+The signed job verifies the established key before heavy build work, runs tests,
+lint and signed assembly, checks the APK certificate, then publishes the signed
+APK, exact source, checksums, license notices and notes with a generated commit
+changelog. It reuses the same Actions secrets on every version; no new key is
+generated in CI. Failed jobs publish no new prerelease. A failed build can be
+rerun for its tag after fixing setup, while source fixes require a newer version.
+Do not replace an existing released tag.
+
+The prepare job needs permission to write main/tags and dispatch Actions. If
+branch protection forbids that push, it fails instead of bypassing protection.
+Repositories with protected main should prepare the version through a reviewed
+pull request and push its matching tag after merge.
+
+## Manual tag alternative
 
 Update Android versionCode/versionName and add `docs/releases/<version>.md`.
 Run the checklist on the intended device and record results honestly. Push a
@@ -94,7 +140,7 @@ matching version tag, for example `v0.6.0`, to run tests, lint, debug/release
 builds, signature verification and automatic GitHub prerelease publication.
 Only push a release tag when its source is ready for distribution. The initial
 pipeline marks builds as prereleases because device acceptance is outstanding.
-No tag or APK has been published as part of preparing this workflow.
+Preparing these workflows does not itself publish a tag or signed APK.
 
 Each release includes a signed APK, a `git archive` of its exact source,
 SHA256SUMS, public certificate details and licenses/notices. Source archives

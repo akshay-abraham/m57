@@ -35,7 +35,9 @@ jobs:
       - name: Unit tests, lint, and APK
         env:
           M57_SOURCE_REF: ${{ github.sha }}
-        run: ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --no-daemon
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:testReleaseUnitTest :app:lintRelease :app:assembleRelease --no-daemon --max-workers=2
       - uses: actions/upload-artifact@v4
         with:
           name: m57-debug
