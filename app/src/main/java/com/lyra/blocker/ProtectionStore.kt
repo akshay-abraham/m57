@@ -8,6 +8,12 @@ import android.provider.Settings
 class ProtectionStore(context: Context) {
     private val context = context.applicationContext
     val prefs = context.getSharedPreferences("lyra_protection", Context.MODE_PRIVATE)
+    var setupStep:Int
+        get()=prefs.getInt("setup_step",0).coerceIn(0,3)
+        set(value){require(value in 0..3);prefs.edit().putInt("setup_step",value).apply()}
+    var setupComplete:Boolean
+        get()=prefs.getBoolean("setup_complete",false)
+        set(value){prefs.edit().putBoolean("setup_complete",value).apply()}
     var aiEnabled: Boolean
         get() = prefs.getBoolean("ai_enabled", true)
         set(value) { prefs.edit().putBoolean("ai_enabled", value).apply() }

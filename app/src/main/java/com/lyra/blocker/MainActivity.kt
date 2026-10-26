@@ -52,6 +52,7 @@ class MainActivity : Activity() {
     private val familyPages by lazy { FamilyPages(this, { unlocked }, { navigate(it) }, { requestFamilyVpn() }) }
     private val appRulesPages by lazy { AppRulesPages(this, { unlocked }) }
     private val mediaPages by lazy { MediaPages(this,{unlocked}) }
+    private val setupPages by lazy {SetupPages(this,{unlocked},{navigate(it)})}
     private var dialog: AlertDialog? = null
     private var backAction: (() -> Unit)? = null
     private var backRegistered = false
@@ -147,7 +148,7 @@ class MainActivity : Activity() {
     private fun showHome() {
         unlocked = false
         val page = page()
-        val ready = accessibilityEnabled() && store.hasCredential && store.consented
+        val ready = accessibilityEnabled() && store.hasCredential && store.consented && store.setupComplete
         page.addView(LyraUi.badge(this, when {
             !store.hasCredential -> "YOUR NEXT CHAPTER"
             !ready -> "SETUP NEEDS ATTENTION"
@@ -192,6 +193,7 @@ class MainActivity : Activity() {
             AdminPage.OVERVIEW -> showOverview()
             AdminPage.CONTROLS -> showControls()
             AdminPage.SETTINGS -> showAdminSettings()
+            AdminPage.SETUP -> setupPages.show(page(AdminPage.SETUP))
             AdminPage.AI -> showAiSettings()
             AdminPage.APP_RULES -> appRulesPages.apps(page(AdminPage.APP_RULES))
             AdminPage.META -> appRulesPages.meta(page(AdminPage.META))
@@ -326,6 +328,7 @@ class MainActivity : Activity() {
         val page = page(AdminPage.SETTINGS)
         title(page, "The essentials.", "Your administrator password, device access and app information.")
         routeCard(page, "⌘", "Device access", "Accessibility, removal protection and authorised App info access.") { navigate(AdminPage.DEVICE_ACCESS) }
+        routeCard(page,"↗","Guided setup","Review the password, accessibility, background and removal-protection steps."){navigate(AdminPage.SETUP)}
         routeCard(page, "✳", "Change password", "Choose a long, memorable password that stays with the administrator.") { showPasswordSetup() }
         routeCard(page, "↗", "Connect the Lyra PWA", "Installation help and the saved destination.") { showPwaGuide() }
         routeCard(page, "i", "About & licenses", "M57, its Curbox roots and open-source notices.") { showLicenses() }
@@ -538,7 +541,7 @@ class MainActivity : Activity() {
             backgroundWork(submit, { store.verifyCredential(value) }) { valid ->
                 if (valid) {
                     unlocked = true
-                    if (legacy) showPasswordSetup() else navigate(AdminPage.OVERVIEW)
+                    if (legacy) showPasswordSetup() else navigate(if(store.setupComplete)AdminPage.OVERVIEW else AdminPage.SETUP)
                 } else feedback.text = if (store.retrySeconds > 0) waitMessage() else "That ${if (legacy) "PIN" else "password"} did not match. Please try again."
             }
         }
@@ -596,7 +599,7 @@ class MainActivity : Activity() {
                     first.text.clear(); second.text.clear()
                     backgroundWork(submit, { PasswordCredential.create(value) }) { hash ->
                         runCatching { store.savePassword(hash); store.consent() }.onSuccess {
-                            unlocked = true; navigate(AdminPage.OVERVIEW)
+                            unlocked = true; navigate(if(store.setupComplete)AdminPage.OVERVIEW else AdminPage.SETUP)
                         }.onFailure { feedback.text = "Your password could not be saved. Please try again." }
                     }
                 }

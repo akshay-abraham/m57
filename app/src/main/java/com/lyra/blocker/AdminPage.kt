@@ -7,6 +7,7 @@ enum class AdminPage(val title: String, val tab: AdminTab) {
     OVERVIEW("Overview", AdminTab.OVERVIEW),
     CONTROLS("Controls", AdminTab.CONTROLS),
     SETTINGS("Settings", AdminTab.SETTINGS),
+    SETUP("Set up M57", AdminTab.SETTINGS),
     AI("AI redirection", AdminTab.CONTROLS),
     APP_RULES("App & website rules", AdminTab.CONTROLS),
     META("Meta AI", AdminTab.CONTROLS),
@@ -24,6 +25,7 @@ enum class AdminPage(val title: String, val tab: AdminTab) {
         APP_RULES, META -> AI
         FAMILY_CATEGORY, FAMILY_EXCEPTIONS, FAMILY_SOURCES -> FAMILY
         DEVICE_ACCESS -> SETTINGS
+        SETUP -> OVERVIEW
         PAUSE -> OVERVIEW
         CUSTOM_PAUSE -> PAUSE
         else -> null
