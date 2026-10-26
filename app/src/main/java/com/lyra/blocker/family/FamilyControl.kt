@@ -30,6 +30,9 @@ class FamilyBootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         FamilySyncJob.schedule(context)
-        FamilyRepository.get(context).reload { FamilyControl.reconcile(context) }
+        val pending = goAsync()
+        FamilyRepository.get(context).reload {
+            try { FamilyControl.reconcile(context) } finally { pending.finish() }
+        }
     }
 }

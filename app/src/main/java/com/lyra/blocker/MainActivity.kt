@@ -164,7 +164,7 @@ class MainActivity : Activity() {
         page.addView(LyraUi.card(this).apply {
             addView(LyraUi.feature(this@MainActivity, "AI", "AI, through Lyra", "Guided learning across supported AI apps and websites."))
             addView(LyraUi.divider(this@MainActivity))
-            addView(LyraUi.feature(this@MainActivity, "Ⅱ", "A little less scrolling", "A gentle pause when YouTube Shorts takes over."))
+            addView(LyraUi.feature(this@MainActivity, "Ⅱ", "A little less scrolling", "Boundaries and reminders for short-video spaces."))
         })
         page.addView(LyraUi.button(this, "Open Lyra  ↗") { openLyra() })
         page.addView(LyraUi.button(this, if (store.hasCredential) "Administrator access" else "Set up M57", false) {
@@ -413,7 +413,7 @@ class MainActivity : Activity() {
                 !BlockPolicy.validDestination(address) -> url.error = "Enter an HTTPS address without credentials or a fragment."
                 pwa.isNotEmpty() && !BlockPolicy.validPackage(pwa) -> webapk.error = "Enter an Android package ID."
                 countdown == null || countdown !in 3..15 -> seconds.error = "Choose 3–15 seconds."
-                !packages.all(BlockPolicy::validPackage) || packageName in packages || "com.android.chrome" in packages || pwa in packages -> extras.error = "Use package IDs; keep M57, its PWA and Chrome unblocked."
+                packages.size > 500 || !packages.all(BlockPolicy::validPackage) || packageName in packages || packages.any { it in com.lyra.blocker.family.BrowserDomains.BROWSERS } || pwa in packages -> extras.error = "Use at most 500 package IDs; keep M57, its PWA and browsers unblocked."
                 else -> {
                     store.destination = address; store.pwaPackage = pwa
                     store.countdown = countdown; store.extraPackages = packages

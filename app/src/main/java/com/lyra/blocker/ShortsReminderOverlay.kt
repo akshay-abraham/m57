@@ -23,8 +23,7 @@ class ShortsReminderOverlay(
             addView(LyraUi.text(service, message.accent, 24f, LyraUi.orange, true))
             addView(LyraUi.text(service, message.body, 14f, LyraUi.muted))
             addView(LyraUi.button(service, "Leave this viewer") {
-                if (isStillShorts()) service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)
-                hide()
+                if (!isStillShorts() || service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK)) hide()
             })
             addView(LyraUi.button(service,"Go to Home",false){if(service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME))hide()})
             if(!block)addView(LyraUi.link(service, "Dismiss reminder") { hide() })
