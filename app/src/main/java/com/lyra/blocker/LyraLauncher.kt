@@ -47,6 +47,9 @@ object LyraLauncher {
         val destination = Uri.parse(store.destination).buildUpon().apply {
             if (source != null) {
                 clearQuery()
+                val configured = Uri.parse(store.destination)
+                for (key in configured.queryParameterNames.filter { it !in setOf("m57_source", "m57_intent") })
+                    for (value in configured.getQueryParameters(key)) appendQueryParameter(key, value)
                 appendQueryParameter("m57_source", source)
                 appendQueryParameter("m57_intent", "new")
             }

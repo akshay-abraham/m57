@@ -334,7 +334,7 @@ class MainActivity : Activity() {
         routeCard(page, "i", "About & licenses", "M57, its Curbox roots and open-source notices.") { showLicenses() }
         page.addView(Switch(this).apply {
             text = "Guard the M57 source page in supported browsers"; isChecked = store.repoGuard
-            setOnCheckedChangeListener { _, checked -> store.repoGuard = checked }
+            setOnCheckedChangeListener { _, checked -> if (unlocked) store.repoGuard = checked }
         })
         page.addView(LyraUi.button(this, "Lock administrator space", false) { lockAndHome() })
     }
