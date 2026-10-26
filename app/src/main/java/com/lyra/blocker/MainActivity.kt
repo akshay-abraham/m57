@@ -332,6 +332,10 @@ class MainActivity : Activity() {
         routeCard(page, "✳", "Change password", "Choose a long, memorable password that stays with the administrator.") { showPasswordSetup() }
         routeCard(page, "↗", "Connect the Lyra PWA", "Installation help and the saved destination.") { showPwaGuide() }
         routeCard(page, "i", "About & licenses", "M57, its Curbox roots and open-source notices.") { showLicenses() }
+        page.addView(Switch(this).apply {
+            text = "Guard the M57 source page in supported browsers"; isChecked = store.repoGuard
+            setOnCheckedChangeListener { _, checked -> store.repoGuard = checked }
+        })
         page.addView(LyraUi.button(this, "Lock administrator space", false) { lockAndHome() })
     }
 

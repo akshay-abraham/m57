@@ -33,7 +33,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
     private lateinit var familyRepository: FamilyRepository
     private var shortsVisit = ShortsVisit()
     private var lastVideoKey:String?=null
-    private data class Target(val packageName: String, val label: String, val reminderOnly: Boolean = false, val appInfo: Boolean = false, val familyCategory: String? = null, val videoKey:String?=null)
+    private data class Target(val packageName: String, val label: String, val reminderOnly: Boolean = false, val appInfo: Boolean = false, val familyCategory: String? = null, val videoKey:String?=null, val sourceHint:String="other")
     private val handler = Handler(Looper.getMainLooper())
     private val recheck = Runnable { checkCurrentWindow() }
     private val pauseExpiry = Runnable { checkCurrentWindow(); schedulePauseExpiry() }
@@ -64,7 +64,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         familyRepository = FamilyRepository.get(this)
         familyOverlay = FamilyBlockedOverlay(this)
         overlay = RedirectOverlay(this, store) { expected ->
-            currentTarget()?.let { !it.reminderOnly && !it.appInfo && it.familyCategory == null && it.packageName == expected } == true
+            currentTarget()?.let { !it.reminderOnly && !it.appInfo && it.familyCategory == null && it.packageName == expected && it.sourceHint == overlay.sourceHint } == true
         }
         shortsOverlay = ShortsReminderOverlay(this) { currentTarget()?.reminderOnly == true }
         store.prefs.registerOnSharedPreferenceChangeListener(this)
@@ -122,8 +122,8 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
             if ((store.videoMode=="block"||remind) && !shortsOverlay.show(target.label,store.videoMode=="block")) shortsVisit.retry()
         } else {
             shortsOverlay.hide()
-            if (overlay.visible && overlay.blockedPackage != target.packageName) overlay.hide()
-            overlay.show(target.packageName, target.label)
+            if (overlay.visible && (overlay.blockedPackage != target.packageName || overlay.sourceHint != target.sourceHint)) overlay.hide()
+            overlay.show(target.packageName, target.label, target.sourceHint)
         }
     }
 
@@ -157,6 +157,10 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         val nativeVideo=MediaPolicy.nativePlatform(activePackage,mediaIds,facebookViewer)
         if(nativeVideo!=null&&videoEnabled(nativeVideo))return Target(activePackage,MediaPolicy.LABELS[nativeVideo]?:"Short videos",reminderOnly=true,videoKey=nativeVideo)
         val browserLabels = if (activePackage in BrowserDomains.BROWSERS) collectLabels(root, true) else emptyList()
+        if (store.repoGuard) for (item in browserLabels) {
+            if (BrowserDomains.host(activePackage,item.id,item.text) != null && HandoffPolicy.repositoryAddress(item.text))
+                return Target(activePackage,"M57 source repository",familyCategory="source")
+        }
         if (familyStore.browserEnabled) for (item in browserLabels) {
             val host = BrowserDomains.host(activePackage, item.id, item.text) ?: continue
             val category = familyRepository.index.match(host) ?: continue
@@ -170,7 +174,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         val label = BlockPolicy.apps[activePackage]?.takeIf {
             activePackage !in store.disabledApps && (metaService != "meta" || metaAllowed)
         } ?: activePackage.takeIf { it in store.extraPackages && it !in BlockPolicy.apps }?.let { "This AI app" }
-        if (label != null) return Target(activePackage, label)
+        if (label != null) return Target(activePackage, label, sourceHint=HandoffPolicy.source(label))
         if (activePackage !in MetaPolicy.SERVICES && activePackage != BlockPolicy.google && activePackage !in BrowserDomains.BROWSERS) {
             return null
         }
@@ -185,7 +189,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
                     store.extraAiDomains.any { domain -> host==domain || host.endsWith(".$domain") })
         } else null
         val reason = embedded ?: website?.let { "This AI website" }
-        return reason?.let { Target(activePackage, it) }
+        return reason?.let { Target(activePackage, it, sourceHint=HandoffPolicy.source(website?.let { address -> BrowserDomains.host(activePackage,address.id,address.text) } ?: it)) }
     }
 
     private fun videoEnabled(key:String):Boolean=when(key){

@@ -28,9 +28,13 @@ class RedirectOverlay(
     var blockedPackage: String? = null
         private set
 
-    fun show(packageName: String, appName: String) {
+    var sourceHint: String? = null
+        private set
+
+    fun show(packageName: String, appName: String, source: String) {
         if (visible) return
         blockedPackage = packageName
+        sourceHint = source
         val message = PopupMessages.ai.next()
         val card = LyraUi.column(service, 26).apply {
             addView(LyraUi.brand(service))
@@ -87,7 +91,7 @@ class RedirectOverlay(
         openButton?.text = "Open Lyra"
         val target = blockedPackage ?: return
         if (!canRedirect(target)) { hide(); return }
-        if (!LyraLauncher.open(service, store)) {
+        if (!LyraLauncher.open(service, store, sourceHint)) {
             Toast.makeText(service, "Install Chrome or a browser, then tap Open Lyra again.", Toast.LENGTH_LONG).show()
         }
     }
@@ -98,5 +102,6 @@ class RedirectOverlay(
         surface.hide()
         openButton = null
         blockedPackage = null
+        sourceHint = null
     }
 }

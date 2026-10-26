@@ -55,9 +55,14 @@ class AppRulesPages(private val activity: Activity, private val authorised: () -
             } else { store.extraPackages=values; android.widget.Toast.makeText(activity,"Custom apps saved",android.widget.Toast.LENGTH_SHORT).show() }
         })
         page.addView(LyraUi.text(activity, "AI website rules", 21f, bold = true))
-        for (domain in BlockPolicy.domains) toggle(page, domain, domain !in store.disabledDomains) { enabled ->
-            store.disabledDomains=if(enabled)store.disabledDomains-domain else store.disabledDomains+domain
+        val websiteRows=LyraUi.column(activity,0);page.addView(websiteRows)
+        fun renderWebsites() {
+            websiteRows.removeAllViews()
+            for (domain in BlockPolicy.domains) toggle(websiteRows, domain, domain !in store.disabledDomains) { enabled ->
+                store.disabledDomains=if(enabled)store.disabledDomains-domain else store.disabledDomains+domain
+            }
         }
+        renderWebsites()
         val domains=LyraUi.field(EditText(activity)).apply {
             hint="Additional AI domains, one per line";inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
             minLines=3;setText(store.extraAiDomains.sorted().joinToString("\n"));page.addView(this)
@@ -71,7 +76,7 @@ class AppRulesPages(private val activity: Activity, private val authorised: () -
             else {store.extraAiDomains=valid.filterNotNull().toSet();android.widget.Toast.makeText(activity,"Website rules saved",android.widget.Toast.LENGTH_SHORT).show()}
         })
         page.addView(LyraUi.button(activity,"Restore built-in app and website defaults",false) {
-            if(authorised()){store.disabledApps=emptySet();store.disabledDomains=emptySet();render(search.text.toString())}
+            if(authorised()){store.disabledApps=emptySet();store.disabledDomains=emptySet();render(search.text.toString());renderWebsites()}
         })
     }
     fun meta(page: LinearLayout) {
