@@ -5,7 +5,7 @@ modified hosted versions whose changes are kept private. Akshay authorised AGPLv
 map is in [LICENSING.md](../LICENSING.md); it preserves other contributors’
 licenses and copyright notices.
 
-## Recommendation
+## Applied arrangement
 
 The applied choice is AGPL-3.0-only for original M57 modules, retaining GPL-3.0 for Curbox-derived
 portions and preserving Apache-2.0 notices for the Gradle wrapper. Distribute
@@ -37,19 +37,19 @@ commercially distribute compliant versions. They do not reserve all sales or
 competition to the original author. Trademark/name rules are a separate
 decision, not an extra restriction to append to GPL-covered code.
 
-## Concrete work before changing the notices
+## Continuing licensing obligations
 
-1. Inventory the exact copied/adapted Curbox files, original M57 files,
+1. Maintain the inventory of copied/adapted Curbox files, original M57 files,
    mixed files and third-party wrapper/assets/data terms. Check copyright
    ownership/permissions for any existing contributions being relicensed.
-2. Choose AGPL-3.0-only versus AGPL-3.0-or-later for original work. Do not infer
+2. Original work uses AGPL-3.0-only. Do not infer
    an or-later grant merely because a license text contains its standard
    instructions for authors.
-3. Prepare both license texts, a license map and accurate per-file SPDX
+3. Retain both license texts, the license map and accurate per-file SPDX
    expressions. A mixed-file notice must reflect actual rights, not a global
    search/replace of every GPL header.
-4. Update README, NOTICE, in-app notices, build/source instructions and the
-   release pipeline together. Link each APK to its corresponding source.
+4. Keep README, NOTICE, in-app notices, build/source instructions and the
+   release pipeline in agreement. Link each APK to its corresponding source.
 5. Add an appropriate source offer in any future modified hosted AGPL component
    and check its actual deployment obligations before release.
 

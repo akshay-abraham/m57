@@ -23,7 +23,8 @@ each switch would unintentionally enable other categories and duplicate data.
 The combined lists are available if later useful, but are not needed to make
 independent category switches. The base adware/malware list is itself combined;
 the repo does not provide clean separate malware-only and adware-only switches.
-Final enabled categories/defaults and wording still need a product decision.
+All five implemented categories default off and each has independent controls.
+Additional categories and the original “change phone” idea remain future discussion.
 
 Social-domain blocking can block whole services, including their normal feeds.
 It does not implement the separate requirement to block only Reels while allowing

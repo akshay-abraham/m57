@@ -3,7 +3,7 @@
 These are required device checks, not results already observed. Run on an
 Android 14 phone/emulator and repeat core flows on the school’s OEM devices.
 
-First 0.4.0 target: Samsung Galaxy M13 4G, One UI 6, English (UK). No checks
+Current 0.6.0 target: Samsung Galaxy M13 4G, One UI 6, English (UK). No checks
 below have yet been run on that device. Version 0.1–0.3 update checks are
 historical baselines; the current password-migration checks are listed below.
 
@@ -54,8 +54,8 @@ historical baselines; the current password-migration checks are listed below.
 13. Measure APK size, idle CPU/battery and event processing on the actual device.
     No size, latency, reboot-resilience or tamper-resistance figures are claimed
     until these measurements and checks have been completed.
-14. Open the native YouTube Shorts viewer. Verify the glass reminder appears,
-    waiting at least 20 seconds does not redirect, and Dismiss keeps the current
+14. Select Reminder mode, then open the native YouTube Shorts viewer. Verify the glass reminder appears,
+    waiting at least 20 seconds does not redirect, and Dismiss reminder keeps the current
     video playing. Swipe through several Shorts: no repeated popup. Leave the
     viewer for at least two seconds, return, and verify a new reminder. Check
     YouTube Home, search results and ordinary videos remain unaffected. Repeat
@@ -137,3 +137,26 @@ historical baselines; the current password-migration checks are listed below.
     list states, cancelled VPN approval and no existing VPN consent. Record the
     one-VPN-per-profile tradeoff. Check no query/domain-visit history is written
     to logs or app storage, and that source/license metadata is available.
+
+29. Check Block (the default) and Reminder modes separately on YouTube/ReVanced/
+    Morphe and Instagram full-screen viewers. Block must offer no dismiss path;
+    failed Back must not remove the shield. Test native/browser Reels and feed
+    previews. Verify Snapchat chat, Facebook normal feeds and TikTok recognition
+    across actual versions, and acknowledge Josh's whole-app chat/call boundary.
+30. Disable/restore each built-in AI app/domain rule, save custom rules and verify
+    immediate enforcement. Both app and website switches should visibly refresh
+    after restoring defaults. Keep browsers, M57 and the Lyra PWA usable.
+    Check the Meta master/service switches and ordinary messages/feeds.
+31. Redirect ChatGPT and Gemini to a new Lyra chat and verify the current available
+    model suggestion. A manual model choice and a first send must win over a late
+    response. Open an existing chat with hint parameters: its model must remain.
+    Test login return, invalid hints, unavailable endpoint/provider, school hint
+    configuration, different-school PWAs and launcher-only WebAPK discovery.
+32. Open the M57 repo and its raw source in a supported browser; verify the path
+    guard, adjacent repositories, the Settings toggle, pause and 60-second
+    authorised source-review window. About must show the build's exact source
+    commit and complete AGPL/GPL/Apache/StevenBlack notices.
+33. Build a signed candidate through the tag workflow, verify its public signing
+    fingerprint/checksums and source archive, and install over the previous APK
+    using the same signing identity. Record actual CI/device results before
+    describing a build as accepted. Recovery remains excluded.

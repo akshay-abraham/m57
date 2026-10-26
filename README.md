@@ -1,9 +1,11 @@
 # M57 for Android
 
 This is the standalone M57 project, extracted from Lyra's
-`android/lyra-blocker` directory at Lyra commit `125a1ca`. The first redesign pass adds administrator navigation, password setup and
-protection schedules; further M57 work is being discussed with Akshay one
-item at a time. Android build and real-device verification are still pending. See [implementation progress](docs/implementation.md).
+`android/lyra-blocker` directory at Lyra commit `125a1ca`. Version 0.6.0 source
+includes the new administrator UI, guided setup, editable AI rules, short-video
+controls, family DNS/browser filtering and Lyra handoff. Android compilation,
+live downloads and real-device acceptance remain pending; see
+[feature status](docs/status.md) and [device checks](DEVICE_TESTS.md).
 
 A small, native Android 14+ Curbox fork that redirects supported AI apps to
 Lyra’s learning harness. The web app and this Android app are separate programs.
@@ -23,7 +25,8 @@ M57 locks the administrator space.
 The labelled dock hides on downward scroll, returns on upward scroll or near
 the bottom, and hides while the keyboard is open. Scroll hiding is disabled
 when touch exploration is enabled. Family controls are wired to the local DNS
-VPN and browser-domain layer; expanded short-video controls remain planned.
+VPN and browser-domain layer. Short-video controls offer blocking or reminders,
+with per-platform switches and experimental extra platforms.
 All new Android flows still require compilation and device verification.
 
 Password recovery remains a design task: there is no reset service, self-service
@@ -73,9 +76,9 @@ background-kill behaviour has yet been verified on the target phone.
 
 ## Behavior
 
-- Opening a known AI app shows a warm, translucent glass card, with neutral text,
+- Opening a known AI app shows a warm, translucent full-screen intervention, with neutral text,
   orange accents and orange-only Lyra icons. There are no purple or blue UI accents.
-  The app behind the card is blurred using Android's cross-window blur, with a
+  The app behind the screen is blurred using Android's cross-window blur, with a
   more opaque readable fallback when the device disables blur. The primary button opens Lyra immediately, or
   automatically after five seconds. The administrator can choose 3–15 seconds.
 - The initial catalog covers ChatGPT, Gemini, Claude, Copilot, Perplexity,
@@ -87,9 +90,9 @@ background-kill behaviour has yet been verified on the target phone.
   search prompt and the AI shortcut alone do not trigger it.
 - In the Google app, a supported toolbar/assistant title of `Gemini` triggers
   the redirect. Ordinary Google searches remain usable.
-- Chrome, Chrome Beta/Dev and Chromium address bars are checked for the supported
-  AI domains. Lyra’s own site is allowed. Other browsers, incognito surfaces that
-  hide URLs, embedded webviews and unsupported UI layouts are not covered.
+- Known address fields in supported browser packages are checked for AI domains.
+  Lyra’s own site is allowed. Hidden URLs, embedded webviews and unsupported UI
+  layouts can be missed; coverage needs device verification.
 - The original app is covered, not force-stopped. The countdown and a tap share
   one launch path. Leaving the app or locking the screen cancels the countdown.
   If launching fails, the overlay stays and the button allows another attempt.
@@ -97,21 +100,33 @@ background-kill behaviour has yet been verified on the target phone.
   previous one, inspired by the chat greeting. AI messages describe accessing
   models through Lyra's safer guided learning environment. Copy stays still
   while the popup is open, so the countdown does not interrupt reading.
-- YouTube Shorts shows a **reminder only**, with **Leave Shorts** and **Dismiss**.
-  It has no countdown, no automatic navigation and no Lyra link. Leave Shorts
-  performs Back only when tapped; dismissing leaves the current video in place.
-  Supported native clients are YouTube, ReVanced and Morphe. Chrome Shorts URLs
-  are also recognized when the address bar is exposed. Home, ordinary videos,
-  Shorts search results and the Shorts navigation tab alone do not trigger it.
-  The reminder appears once per visit; a two-second exit separates visits and
-  avoids reappearing during transient player updates. AI redirects remain separate.
+- YouTube Shorts and full-screen Instagram Reels have separate switches. The
+  administrator chooses **Block** (default) or **Reminder**. Block offers Back
+  and Home; reminder additionally allows Dismiss and appears once per visit.
+  Neither mode opens Lyra automatically. YouTube Home/ordinary videos and
+  Instagram feeds are not intentionally blocked by these viewer rules.
+- Experimental extra platforms include Snapchat Spotlight, Facebook Reels,
+  TikTok and whole-app Josh/Josh Lite. The extra group starts off; per-platform
+  choices are collapsed behind secondary controls. Josh includes chat/calls,
+  so its whole-app tradeoff is disclosed. See [device checks](DEVICE_TESTS.md).
+- Built-in app/domain rules can be disabled individually and restored. Custom
+  packages/domains are supported. Meta protection has a grouped experimental
+  switch and collapsed service choices for WhatsApp, Instagram, Facebook,
+  Messenger and the dedicated Meta AI app. Header recognition varies by version.
+- AI redirects send a service hint for a **new conversation only**. Lyra's
+  authenticated companion endpoint resolves a current available model; manual
+  choices and existing conversations retain their selected model. The APK has
+  no model IDs. See [handoff and school configuration](docs/handoff.md).
+- A separate Settings switch guards the M57 repository URL path in supported
+  browsers. Global pause and authorised maintenance permit source review.
+  This does not block other GitHub projects or change the open-source license.
 
 The destination defaults to `https://lyra-edu.vercel.app/chat`. A school can set
 its own HTTPS Lyra address in administrator settings. The launcher tries the
 configured PWA package, an installed Chromium WebAPK matching that URL, Chrome,
 then the default browser. Install Lyra from Chrome first for standalone PWA use.
-Android/Chrome control URL handling, so verify this on the actual device. If
-automatic detection does not find the PWA, set its installed package ID.
+Android/Chrome control URL handling, so verify this on the actual device. The saved PWA package must pass the same origin/scope checks as automatic
+discovery. A different school’s PWA is not selected.
 
 ## Find and connect the Lyra PWA
 
@@ -133,8 +148,8 @@ signed with the same key preserves the installed app and its password/settings.
 
 The home screen also includes **Set up or find the Lyra PWA**, with these
 instructions and an **Open in Chrome** button. Detection uses only installed
-Chromium WebAPKs that advertise support for the configured HTTPS address; it
-does not request a list of every installed app.
+Chromium WebAPKs with matching HTTPS origin and path scope, discovered through
+HTTPS handlers and launcher metadata. Plain shortcuts can use browser fallback.
 
 See [Chrome's Android installation instructions](https://support.google.com/chrome/answer/9658361?co=GENIE.Platform%3DAndroid&hl=en).
 
@@ -180,8 +195,9 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 
 The `M57 Android app` GitHub Actions workflow runs those checks and uploads
 a debug APK. Release builds use shrinking; signing must be configured privately
-before distribution. Do not commit signing keys. `./gradlew :app:assembleRelease`
-produces an unsigned release artifact until signing is configured.
+before distribution. Do not commit signing keys. The [signed tag workflow](docs/releases.md)
+checks tests/lint, the certificate identity and exact source before creating a
+prerelease. Without signing configuration a local release artifact is unsigned.
 
 Open **M57 → Set up M57**, agree to the access disclosure, then set
 and confirm a 12–128 character administrator password. Under **Settings →
@@ -259,7 +275,7 @@ No real-device or emulator verification has been performed in this workspace.
 
 New password hashing/migration checks and protection timing/cooldown checks
 passed on the available JVM. Full Android compilation, lint and device checks
-remain pending; see [the exact verification limits](docs/implementation.md#verification).
+remain pending; see [the exact verification limits](docs/status.md).
 
 Unit tests cover app rules, Meta AI headers, normal-message/shortcut false
 positives, Google search false positives, domain boundaries, destination checks

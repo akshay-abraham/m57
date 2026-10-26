@@ -66,3 +66,11 @@ with inherited GPLv3 and Apache notices preserved. Full AGPL, GPL, Apache and
 StevenBlack MIT texts are supplied. Credit for the hosts aggregator goes to
 Steven Black and the StevenBlack/hosts contributors; individual list sources
 retain their own terms. See HOSTS-SOURCES.txt in app assets and LICENSING.md.
+
+Version 0.6.0 adds editable AI app/domain rules, experimental grouped Meta
+controls and administrator-selected short-video boundaries/reminders.
+MediaPolicy.java adapts Curbox ReelAppConfig viewer IDs and retains mixed
+GPL/AGPL terms. Full-screen interventions, source-aware PWA handoff and resumable
+setup are original M57 work. Signed tag releases carry the exact corresponding
+source and certificate/checksum metadata. Recovery is excluded. Android build,
+live-network and Samsung device acceptance remain outstanding.
