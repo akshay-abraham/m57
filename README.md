@@ -7,8 +7,10 @@ item at a time. Android build and real-device verification are still pending. Se
 
 A small, native Android 14+ Curbox fork that redirects supported AI apps to
 Lyra’s learning harness. The web app and this Android app are separate programs.
-This directory is **GPLv3**, including the Lyra changes. See [LICENSE](LICENSE)
-and [NOTICE](NOTICE) for attribution and distribution terms.
+Original M57 work is **AGPLv3-only**; Curbox-derived portions retain GPLv3.
+See [LICENSING.md](LICENSING.md), [LICENSE](LICENSE) and [NOTICE](NOTICE) for
+the component terms and attribution. StevenBlack’s full MIT license is included
+in [LICENSES/MIT-StevenBlack.txt](LICENSES/MIT-StevenBlack.txt) and the in-app notices.
 
 ## Administrator navigation
 
@@ -53,9 +55,8 @@ working copy on failed updates. Live mirror availability has not been verified
 inside this restricted environment. [Integration details](docs/hosts-integration.md).
 
 No domain lists are bundled in the APK. Attribution metadata and the aggregator's
-MIT text are included, with contributing source terms kept distinct. Current
-M57 code remains GPL-3.0-only; [the AGPL combination proposal](docs/licensing-proposal.md)
-is documented and not applied.
+MIT text are included, with contributing source terms kept distinct. Original M57 work is AGPLv3-only with inherited GPLv3 portions retained;
+[LICENSING.md](LICENSING.md) records the applied arrangement.
 
 ## Background running
 
