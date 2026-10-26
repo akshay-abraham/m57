@@ -4,7 +4,26 @@ The public repository is `akshay-abraham/m57`. Akshay created it and ran the
 initial workflows. Signed publication is complete only after the release job
 passes and its APK/source assets appear in GitHub Releases.
 
-## Simple local signed build
+## Build online (recommended)
+
+```sh
+cd ~/m57
+bash scripts/release-online.sh 0.6.3
+```
+
+This only pushes committed source, uploads the saved private signing material to
+GitHub Actions secrets and triggers the version workflow. All Android downloads,
+compilation, tests, lint, signing and publication run on GitHub's hosted runners.
+No local Android build, SDK or emulator is required. Git, GitHub CLI, Python and
+the existing Java keytool are sufficient for the lightweight setup/key check.
+Watch progress at `https://github.com/akshay-abraham/m57/actions` and download a
+successful signed build from GitHub Releases.
+
+After the first setup, future releases can be started entirely from GitHub's
+**Actions → Prepare a signed release → Run workflow** button. Choose a version
+greater than the current one. The same stored key is reused automatically.
+
+## Optional local signed build
 
 ```sh
 cd ~/m57
