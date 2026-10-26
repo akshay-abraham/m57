@@ -32,7 +32,8 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
     private lateinit var familyStore: FamilyStore
     private lateinit var familyRepository: FamilyRepository
     private var shortsVisit = ShortsVisit()
-    private data class Target(val packageName: String, val label: String, val reminderOnly: Boolean = false, val appInfo: Boolean = false, val familyCategory: String? = null)
+    private var lastVideoKey:String?=null
+    private data class Target(val packageName: String, val label: String, val reminderOnly: Boolean = false, val appInfo: Boolean = false, val familyCategory: String? = null, val videoKey:String?=null)
     private val handler = Handler(Looper.getMainLooper())
     private val recheck = Runnable { checkCurrentWindow() }
     private val pauseExpiry = Runnable { checkCurrentWindow(); schedulePauseExpiry() }
@@ -88,6 +89,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
     private fun checkCurrentWindow() {
         if (!::overlay.isInitialized) return
         val target = currentTarget()
+        if(target?.videoKey!=null&&target.videoKey!=lastVideoKey){shortsVisit=ShortsVisit();lastVideoKey=target.videoKey}
         handler.removeCallbacks(appInfoRetry)
         val remind = shortsVisit.shouldRemind(target?.reminderOnly == true, SystemClock.elapsedRealtime())
         if (target == null) { overlay.hide(); shortsOverlay.hide(); familyOverlay.hide(); return }
@@ -117,7 +119,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
             handler.postDelayed(appInfoRetry, 1_000)
         } else if (target.reminderOnly) {
             overlay.hide()
-            if (remind && !shortsOverlay.show()) shortsVisit.retry()
+            if ((store.videoMode=="block"||remind) && !shortsOverlay.show(target.label,store.videoMode=="block")) shortsVisit.retry()
         } else {
             shortsOverlay.hide()
             if (overlay.visible && overlay.blockedPackage != target.packageName) overlay.hide()
@@ -145,29 +147,26 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
             }, getString(R.string.app_name), getString(R.string.accessibility_description))
             return if (appInfo || accessibility) Target(activePackage, "M57 settings", appInfo = true) else null
         }
-        // Shorts always takes the reminder path, including when the user has
-        // added YouTube to their custom package list. Never launch Lyra for it.
-        if (activePackage in ShortsPolicy.packages) {
-            val visible = ShortsPolicy.playerIds.flatMap { id ->
-                root.findAccessibilityNodeInfosByViewId("$activePackage:id/$id")
-            }.filter { node ->
-                val bounds = Rect()
-                node.getBoundsInScreen(bounds)
-                node.isVisibleToUser && Rect.intersects(bounds, Rect(0, 0,
-                    resources.displayMetrics.widthPixels, resources.displayMetrics.heightPixels))
-            }.mapNotNull { it.viewIdResourceName }
-            return if (ShortsPolicy.isNativeShorts(activePackage, visible)) Target(activePackage, "YouTube Shorts", true) else null
-        }
+        val mediaIds=MediaPolicy.inspectedNames(activePackage).flatMap { id -> root.findAccessibilityNodeInfosByViewId("$activePackage:id/$id") }
+            .filter { node ->
+                val bounds=Rect();node.getBoundsInScreen(bounds)
+                (node.isVisibleToUser&&Rect.intersects(bounds,Rect(0,0,resources.displayMetrics.widthPixels,resources.displayMetrics.heightPixels))) ||
+                    (activePackage in MediaPolicy.TIKTOK&&node.viewIdResourceName=="$activePackage:id/long_press_layout")
+            }.mapNotNull {it.viewIdResourceName}.toSet()
+        val facebookViewer=activePackage=="com.facebook.katana"&&root.findAccessibilityNodeInfosByText("Reels tab details").any {it.isVisibleToUser&&it.contentDescription?.toString()=="Reels tab details"}
+        val nativeVideo=MediaPolicy.nativePlatform(activePackage,mediaIds,facebookViewer)
+        if(nativeVideo!=null&&videoEnabled(nativeVideo))return Target(activePackage,MediaPolicy.LABELS[nativeVideo]?:"Short videos",reminderOnly=true,videoKey=nativeVideo)
         val browserLabels = if (activePackage in BrowserDomains.BROWSERS) collectLabels(root, true) else emptyList()
         if (familyStore.browserEnabled) for (item in browserLabels) {
             val host = BrowserDomains.host(activePackage, item.id, item.text) ?: continue
             val category = familyRepository.index.match(host) ?: continue
             return Target(activePackage, host, familyCategory = category)
         }
-        if (browserLabels.any { ShortsPolicy.isShortsAddress(it.text) }) return Target(activePackage, "YouTube Shorts", true)
+        val webVideo=browserLabels.firstNotNullOfOrNull {MediaPolicy.addressPlatform(it.text)}
+        if(webVideo!=null&&videoEnabled(webVideo))return Target(activePackage,MediaPolicy.LABELS[webVideo]?:"Short videos",reminderOnly=true,videoKey=webVideo)
         if (!store.aiEnabled) return null
         val metaService = MetaPolicy.SERVICES[activePackage]
-        val metaAllowed = store.metaEnabled && metaService in store.metaServices
+        val metaAllowed = metaService!=null && store.metaEnabled && metaService in store.metaServices
         val label = BlockPolicy.apps[activePackage]?.takeIf {
             activePackage !in store.disabledApps && (metaService != "meta" || metaAllowed)
         } ?: activePackage.takeIf { it in store.extraPackages && it !in BlockPolicy.apps }?.let { "This AI app" }
@@ -187,6 +186,12 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         } else null
         val reason = embedded ?: website?.let { "This AI website" }
         return reason?.let { Target(activePackage, it) }
+    }
+
+    private fun videoEnabled(key:String):Boolean=when(key){
+        "youtube"->store.youtubeEnabled
+        "instagram"->store.instagramEnabled
+        else->store.extraVideosEnabled&&key in store.extraVideoApps
     }
 
     private fun collectLabels(root: AccessibilityNodeInfo, browser: Boolean, settings: Boolean = false): List<BlockPolicy.Label> {

@@ -17,7 +17,7 @@ as provided by those sections. This is not a relicensing of Curbox's copyright.
   test, and adapted res/xml/accessibility_service.xml: GPL-3.0-only. Preserve
   Curbox attribution. Modifications adding AGPL-covered material to these
   files must be marked as a mixed work rather than erase the GPL notice.
-- LyraAccessibilityService.kt, BackgroundAccess.kt and family/BrowserDomains.java:
+- LyraAccessibilityService.kt, BackgroundAccess.kt, MediaPolicy.java and family/BrowserDomains.java:
   GPL-3.0-only AND AGPL-3.0-only, reflecting retained/adapted Curbox-derived
   portions and original M57 additions. This means both sets of applicable
   obligations, not a choice to discard one of the licenses.

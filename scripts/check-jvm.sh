@@ -12,6 +12,7 @@ if command -v javac >/dev/null 2>&1; then
         app/src/main/java/com/lyra/blocker/ProtectionTiming.java \
         app/src/main/java/com/lyra/blocker/BackgroundHelp.java \
         app/src/main/java/com/lyra/blocker/AccessibilitySettingsPolicy.java \
+        app/src/main/java/com/lyra/blocker/MediaPolicy.java app/src/main/java/com/lyra/blocker/MetaPolicy.java \
         app/src/main/java/com/lyra/blocker/family/*.java \
         app/src/test/java/com/lyra/blocker/*Checks.java
 else
@@ -21,11 +22,12 @@ else
         app/src/main/java/com/lyra/blocker/ProtectionTiming.java \
         app/src/main/java/com/lyra/blocker/BackgroundHelp.java \
         app/src/main/java/com/lyra/blocker/AccessibilitySettingsPolicy.java \
+        app/src/main/java/com/lyra/blocker/MediaPolicy.java app/src/main/java/com/lyra/blocker/MetaPolicy.java \
         app/src/main/java/com/lyra/blocker/family/*.java \
         app/src/test/java/com/lyra/blocker/*Checks.java
 fi
 
-for suite in PasswordCredentialChecks ProtectionTimingChecks BackgroundHelpChecks AccessibilitySettingsChecks FamilyRuleChecks DnsPacketChecks; do
+for suite in PasswordCredentialChecks ProtectionTimingChecks BackgroundHelpChecks AccessibilitySettingsChecks FamilyRuleChecks DnsPacketChecks MediaMetaChecks; do
     if [ "$suite" = FamilyRuleChecks ] && [ "$#" -gt 0 ]; then
         java -cp "$check_dir" "com.lyra.blocker.$suite" "$1"
     else

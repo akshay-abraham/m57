@@ -51,6 +51,7 @@ class MainActivity : Activity() {
     private var pendingFamilyVpn = false
     private val familyPages by lazy { FamilyPages(this, { unlocked }, { navigate(it) }, { requestFamilyVpn() }) }
     private val appRulesPages by lazy { AppRulesPages(this, { unlocked }) }
+    private val mediaPages by lazy { MediaPages(this,{unlocked}) }
     private var dialog: AlertDialog? = null
     private var backAction: (() -> Unit)? = null
     private var backRegistered = false
@@ -332,15 +333,7 @@ class MainActivity : Activity() {
     }
 
     private fun showShortVideos() {
-        val page = page(AdminPage.SHORT_VIDEOS)
-        title(page, "A pause in the scroll.", "A little space to choose what comes next.")
-        page.addView(LyraUi.card(this).apply {
-            addView(LyraUi.badge(this@MainActivity, "CURRENT BEHAVIOUR"))
-            addView(LyraUi.text(this@MainActivity, "YouTube Shorts", 22f, bold = true))
-            addView(LyraUi.text(this@MainActivity, "M57 shows a gentle, dismissible reminder on supported Shorts screens. Ordinary videos stay available. This build does not hard-block Shorts.", 15f, LyraUi.muted))
-        })
-        page.addView(LyraUi.text(this, "Next in this space", 20f, bold = true))
-        page.addView(LyraUi.text(this, "A dedicated toggle, administrator-selected behaviour, Instagram Reels with the home feed allowed, and experimental controls for other short-video apps are still to come.", 15f, LyraUi.muted))
+        mediaPages.show(page(AdminPage.SHORT_VIDEOS))
     }
 
     private fun showFamily() {
