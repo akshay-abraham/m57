@@ -24,7 +24,17 @@ Keep application ID `com.lyra.blocker` and the established signing key when
 updating an existing installation. A different key cannot update that APK in
 place. Preserve and back up the existing keystore privately before changing
 distribution. A CI-generated debug key is not a stable production identity.
-No production key has been generated or replaced by this implementation.
+Akshay confirmed the installed app is a debug APK with no release key yet. A
+separate private RSA-4096 release key is now stored locally under
+`~/.local/share/m57/signing`, with owner-only directory/file permissions. The
+existing local debug keystore was preserved there too; its fingerprint has not
+been compared with the installed phone APK. Credentials are in the private
+`credentials.json`, with public certificate/digest alongside. None of this
+private directory belongs in Git. Back it up privately before using the key.
+
+The new release key cannot update a debug-signed installation in place. Keep
+that installation intact until its configuration/protection has been deliberately
+migrated. No uninstall, data clearing or signing-key replacement was performed.
 
 Configure repository Actions secrets privately, never in a commit or issue:
 
@@ -35,6 +45,17 @@ Configure repository Actions secrets privately, never in a commit or issue:
 | `M57_KEY_ALIAS` | Its signing alias |
 | `M57_KEY_PASSWORD` | Its key password |
 | `M57_SIGNER_SHA256` | Expected public certificate SHA-256 digest, with or without colons |
+
+After the public repository exists, configure its Actions secrets without printing
+passwords or passing them as command-line arguments:
+
+```sh
+python3 scripts/upload-signing-secrets.py --repository akshay-abraham/m57
+```
+
+This setup command sends the key to the explicitly named repository. It requires
+GitHub CLI network/auth access and repository administration. It is never run
+by pull-request checks.
 
 For local signed builds, use `M57_KEYSTORE` (absolute path) and the corresponding
 password/alias environment variables. With no signing configuration Gradle may
