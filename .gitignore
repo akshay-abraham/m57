@@ -13,3 +13,4 @@ docs/implementation.md
 .env.*
 *.apk
 *.aab
+*.log

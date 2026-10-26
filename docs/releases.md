@@ -14,6 +14,12 @@ source ~/.config/m57/android-env.sh
 bash scripts/check-android.sh
 ```
 
+To keep a log while watching live task progress, run
+`bash scripts/check-android.sh --log m57-check.log`. The log includes stdout and
+stderr and overwrites an existing file at that path. A failed check still exits
+with a failure status when logging is enabled. Relative log paths use the
+terminal's current directory; `*.log` files are excluded from Git.
+
 The setup verifies archive checksums, uses the official Temurin and Google
 downloads, and asks you to review Android SDK licenses. It keeps system Java
 unchanged. The check script runs debug and release unit tests, lint and APK
