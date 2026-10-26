@@ -1,7 +1,7 @@
 # M57 for Android
 
 This is the standalone M57 project, extracted from Lyra's
-`android/lyra-blocker` directory at Lyra commit `125a1ca`. Version 0.6.0 source
+`android/lyra-blocker` directory at Lyra commit `125a1ca`. Version 0.6.2 source
 includes the new administrator UI, guided setup, editable AI rules, short-video
 controls, family DNS/browser filtering and Lyra handoff. Android compilation,
 live downloads and real-device acceptance remain pending; see

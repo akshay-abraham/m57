@@ -1,7 +1,10 @@
-# M57 0.6.0 implementation status
+# M57 0.6.2 implementation status
 
-Prepared 26 October 2026. These are source changes, not a claim of Android build
-or device acceptance. Each feature is committed separately in this repository.
+Updated 26 October 2026. Akshay's normal terminal now has JDK 17/SDK 35;
+its previous debug/release tests and APK assembly completed, while lint exposed
+two API-analysis errors. Those errors have targeted documented fixes in source.
+The restricted agent runner still cannot start Gradle's file-lock networking.
+Full signed Gradle/CI success and device acceptance must be recorded separately.
 
 | Area | Source implementation |
 | --- | --- |
@@ -62,3 +65,26 @@ Publication was attempted using `gh repo create akshay-abraham/m57 --public
 No origin/public repository, tag or release was created by that attempt. Release
 secrets remain local. The default Lyra Turbopack build likewise hit a restricted
 local port-binding operation; successful static checks do not replace that build.
+
+## 0.6.2 review and signed-release automation
+
+- VPN consent is checked before foreground startup. Documented configured-VPN
+  eligibility and DNS flag combinations have narrowly scoped lint suppressions.
+- DNS chooses the active validated non-VPN network instead of the latest callback;
+  loss/shutdown clear selection. Regression checks reject mismatched DNS operations
+  and question types. Countdown/dock drawing objects are reused.
+- Cloud and device-transfer exclusions are explicit for private app data.
+- All current main Java/Kotlin files compile against SDK 35 using cached compiler
+  tools outside Gradle. Eight JVM suites pass on real JDK 17; release-preparation
+  tests pass; the established signing certificate passes and an incorrect one fails.
+- Standalone lint with the cached debug model exits 0 (0 errors, 5 warnings). The
+  cached merged manifest/classes are older artifacts, so this does not replace a
+  fresh debug/release Gradle run. No current signed APK is claimed from that check.
+- The local signed-build command gates output on all Gradle checks and signature
+  verification, then includes exact source/checksums. No old APK is substituted.
+- GitHub's Prepare a signed release workflow accepts a version/notes, increments
+  versionCode, preserves prior notes, commits/tags and dispatches the signed job.
+  The job reuses established encrypted Actions secrets and checks the certificate
+  before building and before publishing. Automatic generated notes are included.
+- Workflow upload/execution and secrets provisioning require GitHub connectivity
+  outside the restricted runner. Source keys are never stored in the repository.
