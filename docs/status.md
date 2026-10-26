@@ -33,7 +33,7 @@ Lyra to-do list; they have not been silently dropped.
 - DNS IPv4/IPv6 UDP parsing, query/answer checks, checksums, malformed input,
   failure responses, browser/domain boundaries, media/Meta rules, WebAPK scope
   and repository URL boundaries pass pure JVM checks.
-- Companion Lyra typecheck, changed-file lint and all 14 unit-test files pass,
+- Companion Lyra typecheck, full ESLint and all 14 unit-test files pass,
   including source validation and dynamic model-suggestion checks.
 - Android XML parsing, diff whitespace, license-byte checks and release metadata
   checks pass. These checks do not compile Kotlin or run an Android VPN.
@@ -47,3 +47,9 @@ the [device acceptance checklist](../DEVICE_TESTS.md).
 
 The repository-publication result is recorded in the local Lyra work log. A
 prepared workflow is not proof of a successful GitHub run or published release.
+
+Publication was attempted using `gh repo create akshay-abraham/m57 --public
+--source=. --remote=origin --push`; the CLI could not connect to api.github.com.
+No origin/public repository, tag or release was created by that attempt. Release
+secrets remain local. The default Lyra Turbopack build likewise hit a restricted
+local port-binding operation; successful static checks do not replace that build.
