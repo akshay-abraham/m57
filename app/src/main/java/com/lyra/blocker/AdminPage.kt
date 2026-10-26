@@ -8,6 +8,8 @@ enum class AdminPage(val title: String, val tab: AdminTab) {
     CONTROLS("Controls", AdminTab.CONTROLS),
     SETTINGS("Settings", AdminTab.SETTINGS),
     AI("AI redirection", AdminTab.CONTROLS),
+    APP_RULES("App & website rules", AdminTab.CONTROLS),
+    META("Meta AI", AdminTab.CONTROLS),
     SHORT_VIDEOS("Short videos", AdminTab.CONTROLS),
     FAMILY("Family browsing", AdminTab.CONTROLS),
     FAMILY_CATEGORY("Family category", AdminTab.CONTROLS),
@@ -19,6 +21,7 @@ enum class AdminPage(val title: String, val tab: AdminTab) {
 
     val parent: AdminPage? get() = when (this) {
         AI, SHORT_VIDEOS, FAMILY -> CONTROLS
+        APP_RULES, META -> AI
         FAMILY_CATEGORY, FAMILY_EXCEPTIONS, FAMILY_SOURCES -> FAMILY
         DEVICE_ACCESS -> SETTINGS
         PAUSE -> OVERVIEW

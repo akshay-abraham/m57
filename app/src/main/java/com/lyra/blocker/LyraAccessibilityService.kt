@@ -22,6 +22,7 @@ import com.lyra.blocker.family.BrowserDomains
 import com.lyra.blocker.family.FamilyStore
 import com.lyra.blocker.family.FamilyRepository
 import com.lyra.blocker.family.FamilyBlockedOverlay
+import com.lyra.blocker.family.HostRules
 
 class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSharedPreferenceChangeListener {
     private lateinit var store: ProtectionStore
@@ -164,17 +165,25 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
             return Target(activePackage, host, familyCategory = category)
         }
         if (browserLabels.any { ShortsPolicy.isShortsAddress(it.text) }) return Target(activePackage, "YouTube Shorts", true)
-        val label = BlockPolicy.apps[activePackage]
-            ?: activePackage.takeIf { it in store.extraPackages }?.let { "This AI app" }
+        if (!store.aiEnabled) return null
+        val metaService = MetaPolicy.SERVICES[activePackage]
+        val metaAllowed = store.metaEnabled && metaService in store.metaServices
+        val label = BlockPolicy.apps[activePackage]?.takeIf {
+            activePackage !in store.disabledApps && (metaService != "meta" || metaAllowed)
+        } ?: activePackage.takeIf { it in store.extraPackages && it !in BlockPolicy.apps }?.let { "This AI app" }
         if (label != null) return Target(activePackage, label)
-        if (activePackage !in BlockPolicy.whatsapp && activePackage != BlockPolicy.google && activePackage !in BlockPolicy.browsers) {
+        if (activePackage !in MetaPolicy.SERVICES && activePackage != BlockPolicy.google && activePackage !in BrowserDomains.BROWSERS) {
             return null
         }
-        val labels = if (activePackage in BlockPolicy.browsers) browserLabels else collectLabels(root, false)
-        val embedded = BlockPolicy.embeddedAi(activePackage, labels)
-        val website = if (activePackage in BlockPolicy.browsers) labels.firstOrNull {
-            it.id.substringAfterLast('/') in setOf("url_bar", "location_bar_edit_text") &&
-                BlockPolicy.blockedAddress(it.text)
+        val labels = if (activePackage in BrowserDomains.BROWSERS) browserLabels else collectLabels(root, false)
+        val embedded = if (metaAllowed && labels.any { MetaPolicy.titleMatches(activePackage,it.id,it.text) || MetaPolicy.titleMatches(activePackage,it.id,it.description) }) "Meta AI"
+            else if(activePackage==BlockPolicy.google)BlockPolicy.embeddedAi(activePackage,labels) else null
+        val ownHost = HostRules.address(store.destination)
+        val website = if (activePackage in BrowserDomains.BROWSERS) labels.firstOrNull {
+            val host=BrowserDomains.host(activePackage,it.id,it.text)
+            host!=null && host!=ownHost &&
+                (BlockPolicy.domains.any { domain -> domain !in store.disabledDomains && (host==domain || host.endsWith(".$domain")) } ||
+                    store.extraAiDomains.any { domain -> host==domain || host.endsWith(".$domain") })
         } else null
         val reason = embedded ?: website?.let { "This AI website" }
         return reason?.let { Target(activePackage, it) }
@@ -187,7 +196,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         var visited = 0
         // Bound traversal. Only title/address-bar fields are read, never message bodies.
         val ids = if (settings) AppInfoPolicy.inspectedIds + AccessibilitySettingsPolicy.INSPECTED_IDS else if (browser) BrowserDomains.INSPECTED_IDS else setOf(
-            "conversation_contact_name", "conversation_title", "toolbar_title", "action_bar_title", "assistant_title",
+            "conversation_contact_name", "conversation_title", "toolbar_title", "action_bar_title", "assistant_title", "thread_title", "thread_header_title", "thread_name",
         )
         while (queue.isNotEmpty() && visited++ < 200) {
             val node = queue.removeFirst()

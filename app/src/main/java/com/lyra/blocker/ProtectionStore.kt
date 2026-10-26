@@ -8,6 +8,42 @@ import android.provider.Settings
 class ProtectionStore(context: Context) {
     private val context = context.applicationContext
     val prefs = context.getSharedPreferences("lyra_protection", Context.MODE_PRIVATE)
+    var aiEnabled: Boolean
+        get() = prefs.getBoolean("ai_enabled", true)
+        set(value) { prefs.edit().putBoolean("ai_enabled", value).apply() }
+    var disabledApps: Set<String>
+        get() = prefs.getStringSet("disabled_apps", emptySet())!!.toSet()
+        set(value) { prefs.edit().putStringSet("disabled_apps", value.toSet()).apply() }
+    var disabledDomains: Set<String>
+        get() = prefs.getStringSet("disabled_ai_domains", emptySet())!!.toSet()
+        set(value) { prefs.edit().putStringSet("disabled_ai_domains", value.toSet()).apply() }
+    var extraAiDomains: Set<String>
+        get() = prefs.getStringSet("extra_ai_domains", emptySet())!!.toSet()
+        set(value) { prefs.edit().putStringSet("extra_ai_domains", value.toSet()).apply() }
+    var metaEnabled: Boolean
+        get() = prefs.getBoolean("meta_enabled", true)
+        set(value) { prefs.edit().putBoolean("meta_enabled", value).apply() }
+    var metaServices: Set<String>
+        get() = prefs.getStringSet("meta_services", setOf("whatsapp", "instagram", "facebook", "messenger", "meta"))!!.toSet()
+        set(value) { prefs.edit().putStringSet("meta_services", value.toSet()).apply() }
+    var youtubeEnabled: Boolean
+        get() = prefs.getBoolean("youtube_enabled", true)
+        set(value) { prefs.edit().putBoolean("youtube_enabled", value).apply() }
+    var instagramEnabled: Boolean
+        get() = prefs.getBoolean("instagram_enabled", true)
+        set(value) { prefs.edit().putBoolean("instagram_enabled", value).apply() }
+    var extraVideosEnabled: Boolean
+        get() = prefs.getBoolean("extra_videos_enabled", false)
+        set(value) { prefs.edit().putBoolean("extra_videos_enabled", value).apply() }
+    var extraVideoApps: Set<String>
+        get() = prefs.getStringSet("extra_video_apps", setOf("snapchat", "facebook", "tiktok", "josh"))!!.toSet()
+        set(value) { prefs.edit().putStringSet("extra_video_apps", value.toSet()).apply() }
+    var videoMode: String
+        get() = prefs.getString("video_mode", "block")!!.let { if (it == "remind") it else "block" }
+        set(value) { require(value in setOf("block", "remind")); prefs.edit().putString("video_mode", value).apply() }
+    var repoGuard: Boolean
+        get() = prefs.getBoolean("repo_guard", true)
+        set(value) { prefs.edit().putBoolean("repo_guard", value).apply() }
     var destination: String
         get() = prefs.getString("destination", "https://lyra-edu.vercel.app/chat")!!
         set(value) { require(BlockPolicy.validDestination(value)); prefs.edit().putString("destination", value).apply() }

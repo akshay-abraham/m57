@@ -50,6 +50,7 @@ class MainActivity : Activity() {
     private var returningFromBattery = false
     private var pendingFamilyVpn = false
     private val familyPages by lazy { FamilyPages(this, { unlocked }, { navigate(it) }, { requestFamilyVpn() }) }
+    private val appRulesPages by lazy { AppRulesPages(this, { unlocked }) }
     private var dialog: AlertDialog? = null
     private var backAction: (() -> Unit)? = null
     private var backRegistered = false
@@ -191,6 +192,8 @@ class MainActivity : Activity() {
             AdminPage.CONTROLS -> showControls()
             AdminPage.SETTINGS -> showAdminSettings()
             AdminPage.AI -> showAiSettings()
+            AdminPage.APP_RULES -> appRulesPages.apps(page(AdminPage.APP_RULES))
+            AdminPage.META -> appRulesPages.meta(page(AdminPage.META))
             AdminPage.SHORT_VIDEOS -> showShortVideos()
             AdminPage.FAMILY -> showFamily()
             AdminPage.FAMILY_CATEGORY -> familyPages.category(page(AdminPage.FAMILY_CATEGORY))
@@ -381,6 +384,12 @@ class MainActivity : Activity() {
     private fun showAiSettings() {
         val page = page(AdminPage.AI)
         title(page, "AI, through Lyra.", "Choose the learning space M57 opens and how the handoff feels.")
+        page.addView(Switch(this).apply {
+            text="AI redirection enabled";isChecked=store.aiEnabled;minimumHeight=LyraUi.dp(this@MainActivity,56)
+            setTextColor(LyraUi.ink);setOnCheckedChangeListener{_,value->if(unlocked)store.aiEnabled=value}
+        })
+        routeCard(page,"↗","App & website rules","Edit built-in entries and add custom apps or AI domains."){navigate(AdminPage.APP_RULES)}
+        routeCard(page,"✳","Meta AI · experimental","Grouped protection with optional per-service controls."){navigate(AdminPage.META)}
         val destination = LyraUi.card(this).also { page.addView(it) }
         val url = input(destination, "Lyra HTTPS address", store.destination, InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI)
         val seconds = input(destination, "Open Lyra after (3–15 seconds)", store.countdown.toString(), InputType.TYPE_CLASS_NUMBER)
