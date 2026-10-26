@@ -10,8 +10,8 @@ android {
         applicationId = "com.lyra.blocker"
         minSdk = 34
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = 5
+        versionName = "0.5.0"
     }
     buildTypes {
         release {

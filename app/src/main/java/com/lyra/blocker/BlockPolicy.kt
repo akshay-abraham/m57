@@ -39,7 +39,7 @@ object BlockPolicy {
     private val headerIds = setOf(
         "conversation_contact_name", "conversation_title", "toolbar_title", "action_bar_title",
     )
-    data class Label(val id: String, val text: String, val description: String = "")
+    data class Label(val id: String, val text: String, val description: String = "", val checkable: Boolean = false)
 
     fun embeddedAi(packageName: String, labels: List<Label>): String? {
         if (packageName in whatsapp) {

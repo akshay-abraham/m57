@@ -4,10 +4,6 @@ package com.lyra.blocker
 import android.content.Context
 import android.os.SystemClock
 import android.provider.Settings
-import java.security.MessageDigest
-import java.security.SecureRandom
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.PBEKeySpec
 
 class ProtectionStore(context: Context) {
     private val context = context.applicationContext
@@ -24,16 +20,38 @@ class ProtectionStore(context: Context) {
     var extraPackages: Set<String>
         get() = prefs.getStringSet("extra_packages", emptySet())!!.toSet()
         set(value) { require(value.all(BlockPolicy::validPackage)); prefs.edit().putStringSet("extra_packages", value.toSet()).apply() }
-    val hasPin: Boolean get() = prefs.contains("pin_hash")
+    val hasPassword: Boolean get() = prefs.contains("password_hash")
+    val hasCredential: Boolean get() = hasPassword || prefs.contains("pin_hash")
+    val needsPasswordUpgrade: Boolean get() = !hasPassword && prefs.contains("pin_hash")
     val consented: Boolean get() = prefs.getBoolean("consent", false)
     fun consent() { prefs.edit().putBoolean("consent", true).commit() }
 
     private fun bootCount() = Settings.Global.getInt(context.contentResolver, Settings.Global.BOOT_COUNT, -1)
-    val pauseRemaining: Long get() = if (prefs.getInt("pause_boot", -2) == bootCount())
-        (prefs.getLong("pause_until", 0) - SystemClock.elapsedRealtime()).coerceAtLeast(0) else 0
+    val pauseIndefinite: Boolean get() = prefs.getString("protection_pause_mode", "") == "always"
+    val pauseRemaining: Long get() {
+        if (pauseIndefinite) return Long.MAX_VALUE
+        if (prefs.getString("protection_pause_mode", "") == "until") return ProtectionTiming.remaining(
+            prefs.getLong("protection_pause_wall", 0), prefs.getLong("protection_pause_elapsed", 0),
+            prefs.getInt("protection_pause_boot", -2), bootCount(), System.currentTimeMillis(), SystemClock.elapsedRealtime())
+        return if (prefs.getInt("pause_boot", -2) == bootCount())
+            (prefs.getLong("pause_until", 0) - SystemClock.elapsedRealtime()).coerceAtLeast(0) else 0
+    }
     val paused: Boolean get() = pauseRemaining > 0
-    fun pause() { prefs.edit().putInt("pause_boot", bootCount()).putLong("pause_until", SystemClock.elapsedRealtime() + 300_000).apply() }
-    fun resume() { prefs.edit().remove("pause_until").apply() }
+    val pauseEndsAt: Long get() = if (paused && !pauseIndefinite) System.currentTimeMillis() + pauseRemaining else 0
+    fun pauseFor(minutes: Int) {
+        require(minutes in setOf(15, 60, 180))
+        pauseUntil(System.currentTimeMillis() + minutes * 60_000L)
+    }
+    fun pauseUntil(deadline: Long) {
+        val duration = deadline - System.currentTimeMillis()
+        require(duration > 0)
+        prefs.edit().putString("protection_pause_mode", "until")
+            .putLong("protection_pause_wall", deadline)
+            .putLong("protection_pause_elapsed", SystemClock.elapsedRealtime() + duration)
+            .putInt("protection_pause_boot", bootCount()).remove("pause_until").apply()
+    }
+    fun pauseAlways() { prefs.edit().putString("protection_pause_mode", "always").remove("pause_until").apply() }
+    fun resume() { prefs.edit().remove("protection_pause_mode").remove("pause_until").apply() }
 
     val appInfoAccessRemaining: Long get() = if (prefs.getInt("app_info_boot", -2) == bootCount())
         (prefs.getLong("app_info_until", 0) - SystemClock.elapsedRealtime()).coerceAtLeast(0) else 0
@@ -42,32 +60,31 @@ class ProtectionStore(context: Context) {
             .putLong("app_info_until", SystemClock.elapsedRealtime() + 60_000).apply()
     }
 
-    fun setPin(pin: String) {
-        require(pin.matches(Regex("[0-9]{6,12}")))
-        val salt = ByteArray(32).also { SecureRandom().nextBytes(it) }
-        prefs.edit().putString("pin_salt", hex(salt)).putString("pin_hash", hex(derive(pin, salt)))
-            .remove("failures").remove("retry_after").commit()
+    /** Called on the UI thread only after the authenticated operation is still current. */
+    fun savePassword(hash: PasswordCredential.Hash) {
+        check(prefs.edit().putString("password_salt", hash.salt).putString("password_hash", hash.digest)
+            .putInt("password_rounds", PasswordCredential.ITERATIONS)
+            .remove("pin_hash").remove("pin_salt").remove("failures").remove("retry_after").remove("retry_wall").commit()) {
+            "Password could not be saved"
+        }
     }
-    val retrySeconds: Long get() = if (prefs.getInt("retry_boot", -2) == bootCount())
-        ((prefs.getLong("retry_after", 0) - SystemClock.elapsedRealtime() + 999) / 1000).coerceAtLeast(0) else 0
-    fun verifyPin(pin: String): Boolean {
-        if (!hasPin || retrySeconds > 0) return false
-        val salt = unhex(prefs.getString("pin_salt", "")!!)
-        val correct = MessageDigest.isEqual(derive(pin, salt), unhex(prefs.getString("pin_hash", "")!!))
-        if (correct) prefs.edit().remove("failures").remove("retry_after").commit()
+    val retrySeconds: Long get() = (ProtectionTiming.remaining(prefs.getLong("retry_wall", 0),
+        prefs.getLong("retry_after", 0), prefs.getInt("retry_boot", -2), bootCount(),
+        System.currentTimeMillis(), SystemClock.elapsedRealtime()) + 999) / 1000
+    fun verifyCredential(value: String): Boolean {
+        if (!hasCredential || retrySeconds > 0) return false
+        val prefix = if (hasPassword) "password" else "pin"
+        val correct = PasswordCredential.verify(value, prefs.getString("${prefix}_salt", null),
+            prefs.getString("${prefix}_hash", null), if (hasPassword) prefs.getInt("password_rounds", 0) else 120_000)
+        if (correct) prefs.edit().remove("failures").remove("retry_after").remove("retry_wall").commit()
         else {
-            val failures = prefs.getInt("failures", 0) + 1
+            val failures = prefs.getInt("failures", 0).coerceIn(0, 1000) + 1
+            val delay = ProtectionTiming.retryDelayMillis(failures)
             prefs.edit().putInt("failures", failures)
                 .putInt("retry_boot", bootCount())
-                .putLong("retry_after", if (failures >= 5) SystemClock.elapsedRealtime() + 30_000 else 0).commit()
+                .putLong("retry_after", if (delay > 0) SystemClock.elapsedRealtime() + delay else 0)
+                .putLong("retry_wall", if (delay > 0) System.currentTimeMillis() + delay else 0).commit()
         }
         return correct
     }
-    private fun derive(pin: String, salt: ByteArray): ByteArray {
-        val spec = PBEKeySpec(pin.toCharArray(), salt, 120_000, 256)
-        return try { SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded }
-        finally { spec.clearPassword() }
-    }
-    private fun hex(bytes: ByteArray) = bytes.joinToString("") { "%02x".format(it) }
-    private fun unhex(value: String) = value.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
 }

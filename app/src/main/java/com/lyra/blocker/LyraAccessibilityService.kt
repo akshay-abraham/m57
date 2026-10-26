@@ -18,16 +18,23 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import java.util.ArrayDeque
+import com.lyra.blocker.family.BrowserDomains
+import com.lyra.blocker.family.FamilyStore
+import com.lyra.blocker.family.FamilyRepository
+import com.lyra.blocker.family.FamilyBlockedOverlay
 
 class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSharedPreferenceChangeListener {
     private lateinit var store: ProtectionStore
     private lateinit var overlay: RedirectOverlay
     private lateinit var shortsOverlay: ShortsReminderOverlay
+    private lateinit var familyOverlay: FamilyBlockedOverlay
+    private lateinit var familyStore: FamilyStore
+    private lateinit var familyRepository: FamilyRepository
     private var shortsVisit = ShortsVisit()
-    private data class Target(val packageName: String, val label: String, val reminderOnly: Boolean = false, val appInfo: Boolean = false)
+    private data class Target(val packageName: String, val label: String, val reminderOnly: Boolean = false, val appInfo: Boolean = false, val familyCategory: String? = null)
     private val handler = Handler(Looper.getMainLooper())
     private val recheck = Runnable { checkCurrentWindow() }
-    private val pauseExpiry = Runnable { checkCurrentWindow() }
+    private val pauseExpiry = Runnable { checkCurrentWindow(); schedulePauseExpiry() }
     private val appInfoExpiry = Runnable { checkCurrentWindow() }
     private val appInfoRetry = Runnable { checkCurrentWindow() }
     private var lastAppInfoRedirect = -1_000L
@@ -37,6 +44,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
             handler.removeCallbacks(appInfoRetry)
             overlay.hide()
             shortsOverlay.hide()
+            familyOverlay.hide()
             shortsVisit.shouldRemind(false, SystemClock.elapsedRealtime())
         }
     }
@@ -44,15 +52,21 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
     override fun onServiceConnected() {
         if (::overlay.isInitialized) overlay.hide()
         if (::shortsOverlay.isInitialized) shortsOverlay.hide()
+        if (::familyOverlay.isInitialized) familyOverlay.hide()
+        if (::familyStore.isInitialized) familyStore.prefs.unregisterOnSharedPreferenceChangeListener(this)
         shortsVisit = ShortsVisit()
         if (::store.isInitialized) store.prefs.unregisterOnSharedPreferenceChangeListener(this)
         if (receiverRegistered) unregisterReceiver(screenOff)
         store = ProtectionStore(this)
+        familyStore = FamilyStore(this)
+        familyRepository = FamilyRepository.get(this)
+        familyOverlay = FamilyBlockedOverlay(this)
         overlay = RedirectOverlay(this, store) { expected ->
-            currentTarget()?.let { !it.reminderOnly && !it.appInfo && it.packageName == expected } == true
+            currentTarget()?.let { !it.reminderOnly && !it.appInfo && it.familyCategory == null && it.packageName == expected } == true
         }
         shortsOverlay = ShortsReminderOverlay(this) { currentTarget()?.reminderOnly == true }
         store.prefs.registerOnSharedPreferenceChangeListener(this)
+        familyStore.prefs.registerOnSharedPreferenceChangeListener(this)
         registerReceiver(screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF), Context.RECEIVER_NOT_EXPORTED)
         receiverRegistered = true
         schedulePauseExpiry()
@@ -64,7 +78,8 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         if (event == null || !::overlay.isInitialized) return
         // Window events from every app let us remove a shield as soon as the user
         // leaves the blocked app. Trees are read only for the supported packages.
-        if (event.packageName?.toString() == packageName) return
+        if (event.packageName?.toString() == packageName && event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED &&
+            event.eventType != AccessibilityEvent.TYPE_WINDOWS_CHANGED) return
         // Coalesce bursts without postponing the check indefinitely on busy screens.
         if (!handler.hasCallbacks(recheck)) handler.postDelayed(recheck, 80)
     }
@@ -74,7 +89,13 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         val target = currentTarget()
         handler.removeCallbacks(appInfoRetry)
         val remind = shortsVisit.shouldRemind(target?.reminderOnly == true, SystemClock.elapsedRealtime())
-        if (target == null) { overlay.hide(); shortsOverlay.hide(); return }
+        if (target == null) { overlay.hide(); shortsOverlay.hide(); familyOverlay.hide(); return }
+        if (target.familyCategory == null) familyOverlay.hide()
+        if (target.familyCategory != null) {
+            overlay.hide(); shortsOverlay.hide()
+            familyOverlay.show(target.label, target.familyCategory)
+            return
+        }
         if (target.appInfo) {
             overlay.hide()
             shortsOverlay.hide()
@@ -82,7 +103,14 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
             if (now - lastAppInfoRedirect >= 1_000) {
                 lastAppInfoRedirect = now
                 performGlobalAction(GLOBAL_ACTION_BACK)
-                if (!LyraLauncher.open(this, store)) performGlobalAction(GLOBAL_ACTION_HOME)
+                val opened = runCatching {
+                    startActivity(Intent(this, MainActivity::class.java).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        putExtra(MainActivity.SETTINGS_GUARD_EXTRA, true)
+                    })
+                    true
+                }.getOrDefault(false)
+                if (!opened && !LyraLauncher.open(this, store)) performGlobalAction(GLOBAL_ACTION_HOME)
             }
             // Recheck the actual foreground before every retry, never redirect on a stale event.
             handler.postDelayed(appInfoRetry, 1_000)
@@ -97,7 +125,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
     }
 
     private fun currentTarget(): Target? {
-        if (!store.consented || !store.hasPin || store.paused ||
+        if (!store.consented || !store.hasCredential || store.paused ||
             !getSystemService(PowerManager::class.java).isInteractive ||
             getSystemService(KeyguardManager::class.java).isKeyguardLocked) return null
         // Select an application window so our non-focusable shield and keyboards
@@ -110,8 +138,11 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         if (activePackage == AppInfoPolicy.settingsPackage) {
             if (store.appInfoAccessRemaining > 0) return null
             val labels = collectLabels(root, false, true)
-            return if (AppInfoPolicy.isOwnAppInfo(activePackage, labels, getString(R.string.app_name), packageName))
-                Target(activePackage, "App info", appInfo = true) else null
+            val appInfo = AppInfoPolicy.isOwnAppInfo(activePackage, labels, getString(R.string.app_name), packageName)
+            val accessibility = AccessibilitySettingsPolicy.matches(activePackage, labels.map {
+                AccessibilitySettingsPolicy.Node(it.id, it.text, it.checkable)
+            }, getString(R.string.app_name), getString(R.string.accessibility_description))
+            return if (appInfo || accessibility) Target(activePackage, "M57 settings", appInfo = true) else null
         }
         // Shorts always takes the reminder path, including when the user has
         // added YouTube to their custom package list. Never launch Lyra for it.
@@ -126,7 +157,12 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
             }.mapNotNull { it.viewIdResourceName }
             return if (ShortsPolicy.isNativeShorts(activePackage, visible)) Target(activePackage, "YouTube Shorts", true) else null
         }
-        val browserLabels = if (activePackage in BlockPolicy.browsers) collectLabels(root, true) else emptyList()
+        val browserLabels = if (activePackage in BrowserDomains.BROWSERS) collectLabels(root, true) else emptyList()
+        if (familyStore.browserEnabled) for (item in browserLabels) {
+            val host = BrowserDomains.host(activePackage, item.id, item.text) ?: continue
+            val category = familyRepository.index.match(host) ?: continue
+            return Target(activePackage, host, familyCategory = category)
+        }
         if (browserLabels.any { ShortsPolicy.isShortsAddress(it.text) }) return Target(activePackage, "YouTube Shorts", true)
         val label = BlockPolicy.apps[activePackage]
             ?: activePackage.takeIf { it in store.extraPackages }?.let { "This AI app" }
@@ -150,14 +186,14 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         queue.add(root)
         var visited = 0
         // Bound traversal. Only title/address-bar fields are read, never message bodies.
-        val ids = if (settings) AppInfoPolicy.inspectedIds else if (browser) setOf("url_bar", "location_bar_edit_text") else setOf(
+        val ids = if (settings) AppInfoPolicy.inspectedIds + AccessibilitySettingsPolicy.INSPECTED_IDS else if (browser) BrowserDomains.INSPECTED_IDS else setOf(
             "conversation_contact_name", "conversation_title", "toolbar_title", "action_bar_title", "assistant_title",
         )
         while (queue.isNotEmpty() && visited++ < 200) {
             val node = queue.removeFirst()
-            val id = node.viewIdResourceName.orEmpty()
+            val id = if (browser && node.uniqueId == "ADDRESSBAR_URL_BOX") "${root.packageName}:id/ADDRESSBAR_URL_BOX" else node.viewIdResourceName.orEmpty()
             if (node.isVisibleToUser && id.substringAfterLast('/') in ids) {
-                result.add(BlockPolicy.Label(id, node.text?.toString().orEmpty(), node.contentDescription?.toString().orEmpty()))
+                result.add(BlockPolicy.Label(id, node.text?.toString().orEmpty(), node.contentDescription?.toString().orEmpty(), node.isCheckable))
             }
             for (index in 0 until node.childCount.coerceAtMost(80)) {
                 if (queue.size >= 200) break
@@ -171,12 +207,12 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         handler.removeCallbacks(recheck)
         handler.post(recheck)
         // A pause expires even if the blocked app emits no new accessibility event.
-        if (key == "pause_until" || key == "pause_boot") schedulePauseExpiry()
+        if (key == "pause_until" || key == "pause_boot" || key?.startsWith("protection_pause_") == true) schedulePauseExpiry()
         if (key == "app_info_until" || key == "app_info_boot") scheduleAppInfoExpiry()
     }
     private fun schedulePauseExpiry() {
         handler.removeCallbacks(pauseExpiry)
-        if (store.paused) handler.postDelayed(pauseExpiry, store.pauseRemaining + 100)
+        if (store.paused && !store.pauseIndefinite) handler.postDelayed(pauseExpiry, store.pauseRemaining.coerceAtMost(86_400_000) + 100)
     }
     private fun scheduleAppInfoExpiry() {
         handler.removeCallbacks(appInfoExpiry)
@@ -185,11 +221,14 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
     override fun onInterrupt() {
         if (::overlay.isInitialized) overlay.hide()
         if (::shortsOverlay.isInitialized) shortsOverlay.hide()
+        if (::familyOverlay.isInitialized) familyOverlay.hide()
     }
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
         if (::overlay.isInitialized) overlay.hide()
         if (::shortsOverlay.isInitialized) shortsOverlay.hide()
+        if (::familyOverlay.isInitialized) familyOverlay.hide()
+        if (::familyStore.isInitialized) familyStore.prefs.unregisterOnSharedPreferenceChangeListener(this)
         if (::store.isInitialized) store.prefs.unregisterOnSharedPreferenceChangeListener(this)
         if (receiverRegistered) unregisterReceiver(screenOff)
         super.onDestroy()
