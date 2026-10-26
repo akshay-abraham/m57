@@ -23,6 +23,10 @@ public final class DnsPacketChecks {
             check(fold(pseudo+sum(denied,header,denied.length-header))==0xffff, "UDP checksum invalid");
             byte[] response = packet.query.clone(); response[2]=(byte)0x81;response[3]=(byte)0x80;
             check((packet.answer(response)[header+11]&15)==0, "Valid upstream answer rejected");
+            byte[] wrongOpcode=response.clone(); wrongOpcode[2]|=0x08;
+            check((packet.answer(wrongOpcode)[header+11]&15)==2, "Mismatched DNS operation accepted");
+            byte[] wrongQuestion=response.clone(); wrongQuestion[wrongQuestion.length-3]=28;
+            check((packet.answer(wrongQuestion)[header+11]&15)==2, "Mismatched DNS question type accepted");
             response[0]^=1;
             check((packet.answer(response)[header+11]&15)==2, "Mismatched upstream ID accepted");
             byte[] badLength=wire.clone(); badLength[header+5]--;

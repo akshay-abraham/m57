@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -21,6 +22,7 @@
     </queries>
     <application
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:supportsRtl="true"
@@ -48,7 +50,12 @@
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
+        <!-- Configured VPNs qualify without exact-alarm permissions. FamilyControl and
+             FamilyVpnService check VPN consent before foreground startup.
+             https://developer.android.com/develop/background-work/services/fgs/service-types#system-exempted
+             Lint's permission-only check cannot represent this runtime eligibility. -->
         <service android:name=".family.FamilyVpnService" android:exported="false"
+            tools:ignore="ForegroundServicePermission"
             android:permission="android.permission.BIND_VPN_SERVICE" android:foregroundServiceType="systemExempted">
             <intent-filter><action android:name="android.net.VpnService" /></intent-filter>
             <meta-data android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON" android:value="false" />

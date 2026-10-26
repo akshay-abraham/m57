@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 package com.lyra.blocker.family
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -41,13 +42,19 @@ class FamilyVpnService : VpnService(), SharedPreferences.OnSharedPreferenceChang
     @Volatile private var underlying: Network? = null
     @Volatile private var tunnel: ParcelFileDescriptor? = null
     @Volatile private var output: FileOutputStream? = null
+    // Network callbacks run off the service thread. Keep a snapshot instead of
+    // switching to whichever Wi-Fi/mobile network happened to report last.
+    private val networks = ConcurrentHashMap<Network, NetworkCapabilities>()
     private var networkRegistered = false
     private val connectivity by lazy { getSystemService(ConnectivityManager::class.java) }
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
-        override fun onAvailable(network: Network) { selectNetwork(network) }
-        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) { selectNetwork(network) }
+        override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+            networks[network] = capabilities
+            handler.post { chooseNetwork() }
+        }
         override fun onLost(network: Network) {
-            if (underlying == network) { underlying = null; chooseNetwork(); updateNotification() }
+            networks.remove(network)
+            handler.post { chooseNetwork() }
         }
     }
     private val refresh = Runnable { updateNotification() }
@@ -63,8 +70,9 @@ class FamilyVpnService : VpnService(), SharedPreferences.OnSharedPreferenceChang
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
-            startForeground(NOTIFICATION, notification("Starting local DNS protection"), ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
             if (!store.vpnRequested || VpnService.prepare(this) != null || repository.index.size() == 0) { stopSelf(); return START_NOT_STICKY }
+            // Configured VPNs qualify for systemExempted; recheck consent before foreground startup.
+            startForeground(NOTIFICATION, notification("Starting local DNS protection"), ServiceInfo.FOREGROUND_SERVICE_TYPE_SYSTEM_EXEMPTED)
             if (tunnel == null) {
                 val descriptor = Builder().setSession("M57 family DNS")
                     .addDisallowedApplication(packageName)
@@ -91,22 +99,20 @@ class FamilyVpnService : VpnService(), SharedPreferences.OnSharedPreferenceChang
         }
     }
 
-    private fun selectNetwork(network: Network) {
-        val capabilities = connectivity.getNetworkCapabilities(network) ?: return
-        if (!capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return
-        underlying = network
-        runCatching { setUnderlyingNetworks(arrayOf(network)) }
-        updateNotification()
-    }
     private fun chooseNetwork() {
+        if (tunnel == null) return
         val active = connectivity.activeNetwork
-        val candidates = listOfNotNull(active) + connectivity.allNetworks.toList()
-        for (network in candidates.distinct()) {
-            val capabilities = connectivity.getNetworkCapabilities(network) ?: continue
-            if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) && !capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                selectNetwork(network); return
-            }
+        val candidates = (listOfNotNull(active) + networks.keys).distinct().mapNotNull { network ->
+            val capabilities = connectivity.getNetworkCapabilities(network) ?: return@mapNotNull null
+            if (!capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return@mapNotNull null
+            network to capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
         }
+        val selected = candidates.firstOrNull { it.second }?.first ?: candidates.firstOrNull()?.first
+        if (underlying == selected) return
+        underlying = selected
+        runCatching { setUnderlyingNetworks(selected?.let { arrayOf(it) }) }
+        updateNotification()
     }
 
     private fun readPackets(descriptor: ParcelFileDescriptor) {
@@ -131,6 +137,9 @@ class FamilyVpnService : VpnService(), SharedPreferences.OnSharedPreferenceChang
         }
     }
 
+    // rawQuery documents bitwise flag combinations, but SDK 35's IntDef lacks flag=true.
+    // https://developer.android.com/reference/android/net/DnsResolver#rawQuery(android.net.Network,byte[],int,java.util.concurrent.Executor,android.os.CancellationSignal,android.net.DnsResolver.Callback)
+    @SuppressLint("WrongConstant")
     private fun resolve(descriptor: ParcelFileDescriptor, packet: DnsPacket) {
         val network = underlying
         if (network == null || !slots.tryAcquire()) { send(descriptor, packet.failed()); return }
@@ -203,6 +212,7 @@ class FamilyVpnService : VpnService(), SharedPreferences.OnSharedPreferenceChang
         callbacks.shutdown()
         handler.removeCallbacksAndMessages(null)
         if (networkRegistered) runCatching { connectivity.unregisterNetworkCallback(networkCallback) }
+        networks.clear()
         store.prefs.unregisterOnSharedPreferenceChangeListener(this)
         protection.prefs.unregisterOnSharedPreferenceChangeListener(this)
         stopForeground(STOP_FOREGROUND_REMOVE)

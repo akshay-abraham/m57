@@ -52,6 +52,7 @@ public final class DnsPacket {
 
     public byte[] answer(byte[] response) {
         if (response == null || response.length < 12 || response.length > 65000 || (response[2] & 0x80) == 0 ||
+            (response[2] & 0x78) != (query[2] & 0x78) ||
             u16(response, 0) != u16(query, 0) || u16(response, 4) != 1) return failed();
         Question q = question(response);
         if (q == null || !q.host.equals(host) || q.type != type || q.nsClass != nsClass) return failed();
