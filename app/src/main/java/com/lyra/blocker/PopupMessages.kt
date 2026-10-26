@@ -18,12 +18,14 @@ class MessageRotation(private val messages: List<PopupMessage>, private val rand
 
 object PopupMessages {
     val ai = MessageRotation(listOf(
-        PopupMessage("Same models.", "A safer way to ask.", "Access the AI models you know through Lyra’s safer, guided learning environment."),
+        PopupMessage("Keep your thinking.", "Bring your question to Lyra.", "Explore the models available in your school's Lyra space, with guidance that helps you reason rather than hand over the whole task."),
         PopupMessage("Keep the curiosity.", "Bring it to Lyra.", "Your next question belongs in a space built for learning. Explore leading AI models with guidance that helps you think."),
         PopupMessage("A better way", "to use AI.", "The models you want, through Lyra’s safer learning space. A little guidance can take your thinking further."),
         PopupMessage("Big questions.", "Thoughtful answers.", "Bring your question to Lyra and explore AI through a safer environment that puts your learning first."),
         PopupMessage("Your ideas first.", "AI by your side.", "Use leading AI models through Lyra, with learning safeguards and guidance that keeps you in the conversation."),
         PopupMessage("More than answers.", "A way to understand.", "Let Lyra turn the models you know into learning partners, inside a safer, guided environment."),
+        PopupMessage("Your details matter.","Ask with a little more care.","Lyra's configured privacy layer can replace detected personal details before a connected AI provider sees them. Ask your school which privacy features are enabled."),
+        PopupMessage("A different perspective.","Your own ideas still lead.","Try a question beyond the syllabus. Lyra's Explore space is there for curiosity, creativity and discovering what you want to learn next."),
     ))
     val shorts = MessageRotation(listOf(
         PopupMessage("One more scroll?", "Maybe a little pause.", "Take a breath. Is this how you wanted to spend your time? You can step away whenever you choose."),

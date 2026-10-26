@@ -2,15 +2,17 @@
 package com.lyra.blocker
 
 import android.accessibilityservice.AccessibilityService
-import android.content.res.ColorStateList
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.Toast
 import kotlin.math.ceil
+import android.animation.ValueAnimator
+import android.view.animation.LinearInterpolator
+import android.content.Intent
+import android.net.Uri
 
 class RedirectOverlay(
     private val service: AccessibilityService,
@@ -21,6 +23,7 @@ class RedirectOverlay(
     private val handler = Handler(Looper.getMainLooper())
     private var timer: Runnable? = null
     private var openButton: Button? = null
+    private var animation:ValueAnimator?=null
     val visible get() = surface.visible
     var blockedPackage: String? = null
         private set
@@ -32,24 +35,21 @@ class RedirectOverlay(
         val card = LyraUi.column(service, 26).apply {
             addView(LyraUi.brand(service))
             addView(LyraUi.badge(service, "$appName → Lyra"))
-            addView(LyraUi.text(service, message.title, 28f, bold = true))
-            addView(LyraUi.text(service, message.accent, 24f, LyraUi.orange, true))
-            addView(LyraUi.text(service, message.body, 14f, LyraUi.muted))
+            addView(LyraUi.text(service, message.title, 35f, bold = true))
+            addView(LyraUi.text(service, message.accent, 29f, LyraUi.orange, true))
+            addView(LyraUi.text(service, message.body, 17f, LyraUi.muted))
         }
+        card.addView(View(service),android.widget.LinearLayout.LayoutParams(-1,0,1f))
+        val ring=CountdownRing(service).apply{seconds=store.countdown;layoutParams=android.widget.LinearLayout.LayoutParams(-1,LyraUi.dp(service,150))}
+        card.addView(ring)
         val open = LyraUi.button(service, "Open Lyra") { launch() }
         openButton = open
         card.addView(open)
-        val countdownBar = ProgressBar(service, null, android.R.attr.progressBarStyleHorizontal).apply {
-            max = 1000
-            progress = 1000
-            progressTintList = ColorStateList.valueOf(LyraUi.orange)
-            progressBackgroundTintList = ColorStateList.valueOf(LyraUi.line)
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
-            layoutParams = android.widget.LinearLayout.LayoutParams(-1, LyraUi.dp(service, 3)).apply {
-                topMargin = LyraUi.dp(service, 12); bottomMargin = LyraUi.dp(service, 8)
-            }
-        }
-        card.addView(countdownBar)
+        card.addView(LyraUi.link(service,"Missing a feature? Tell Lyra"){
+            timer?.let(handler::removeCallbacks);timer=null;animation?.cancel()
+            runCatching{service.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(store.destination).buildUpon().path("/contact").clearQuery().appendQueryParameter("topic","missing-feature").appendQueryParameter("source","m57").build()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))}
+                .onSuccess{hide()}
+        })
         card.addView(LyraUi.link(service, "Go home instead") {
             if (service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)) hide()
         })
@@ -60,11 +60,15 @@ class RedirectOverlay(
         }
         val duration = store.countdown * 1000L
         val deadline = SystemClock.elapsedRealtime() + duration
+        if(ValueAnimator.areAnimatorsEnabled())animation=ValueAnimator.ofFloat(1f,0f).apply{
+            this.duration=duration;interpolator=LinearInterpolator();addUpdateListener{ring.fraction=it.animatedValue as Float};start()
+        }
         val tick = object : Runnable {
             override fun run() {
                 if (!visible) return
                 val remaining = (deadline - SystemClock.elapsedRealtime()).coerceAtLeast(0)
-                countdownBar.progress = (remaining * 1000 / duration).toInt()
+                ring.seconds=ceil(remaining/1000.0).toInt()
+                if(!ValueAnimator.areAnimatorsEnabled())ring.fraction=remaining.toFloat()/duration
                 if (remaining == 0L) launch()
                 else {
                     val caption = "Open Lyra · ${ceil(remaining / 1000.0).toInt()}s"
@@ -77,6 +81,7 @@ class RedirectOverlay(
         handler.post(tick)
     }
     private fun launch() {
+        animation?.cancel();animation=null
         timer?.let(handler::removeCallbacks)
         timer = null
         openButton?.text = "Open Lyra"
@@ -87,6 +92,7 @@ class RedirectOverlay(
         }
     }
     fun hide() {
+        animation?.cancel();animation=null
         timer?.let(handler::removeCallbacks)
         timer = null
         surface.hide()

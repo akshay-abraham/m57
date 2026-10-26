@@ -4,6 +4,7 @@ package com.lyra.blocker
 import android.accessibilityservice.AccessibilityService
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -21,15 +22,15 @@ class OverlaySurface(private val service: AccessibilityService) {
 
     fun show(card: LinearLayout, announcement: String): Boolean {
         if (visible) return false
-        val backdrop = FrameLayout(service).apply { setBackgroundColor(Color.argb(12, 255, 243, 228)) }
+        val backdrop = FrameLayout(service)
         val blurEnabled = manager.isCrossWindowBlurEnabled
-        card.background = LyraUi.glass(service, blurEnabled)
-        card.elevation = LyraUi.dp(service, 16).toFloat()
-        card.outlineAmbientShadowColor = Color.argb(65, 100, 64, 35)
-        card.outlineSpotShadowColor = Color.argb(65, 100, 64, 35)
-        val scroll = ScrollView(service).apply { isFillViewport = false; addView(card); isVerticalScrollBarEnabled = false }
-        val width = service.resources.displayMetrics.widthPixels.coerceAtMost(LyraUi.dp(service, 412)) - LyraUi.dp(service, 40)
-        backdrop.addView(scroll, FrameLayout.LayoutParams(width, -2, Gravity.CENTER))
+        fun backdropFor(blur:Boolean)=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(
+            Color.argb(if(blur)225 else 255,255,248,240),Color.argb(if(blur)235 else 255,250,244,238)))
+        backdrop.background=backdropFor(blurEnabled)
+        card.background=null;card.elevation=0f
+        val scroll = ScrollView(service).apply { isFillViewport = true; addView(card); isVerticalScrollBarEnabled = false }
+        val width = service.resources.displayMetrics.widthPixels.coerceAtMost(LyraUi.dp(service, 720))
+        backdrop.addView(scroll, FrameLayout.LayoutParams(width, -1, Gravity.CENTER_HORIZONTAL))
         backdrop.setOnApplyWindowInsetsListener { view, insets ->
             val bars = insets.getInsets(android.view.WindowInsets.Type.systemBars())
             view.setPadding(bars.left, bars.top + LyraUi.dp(service, 20), bars.right, bars.bottom + LyraUi.dp(service, 20))
@@ -54,7 +55,7 @@ class OverlaySurface(private val service: AccessibilityService) {
         // System blur can change while visible (for example, with battery saver).
         val listener = Consumer<Boolean> { enabled ->
             if (view === backdrop && backdrop.isAttachedToWindow) {
-                card.background = LyraUi.glass(service, enabled)
+                backdrop.background=backdropFor(enabled)
                 params.setBlurBehindRadius(if (enabled) LyraUi.dp(service, 32) else 0)
                 params.dimAmount = if (enabled) 0.18f else 0.38f
                 manager.updateViewLayout(backdrop, params)
@@ -63,13 +64,14 @@ class OverlaySurface(private val service: AccessibilityService) {
         blurListener = listener
         manager.addCrossWindowBlurEnabledListener(service.mainExecutor, listener)
         backdrop.requestApplyInsets()
+        backdrop.alpha=0f;backdrop.animate().alpha(1f).setDuration(180).start()
         backdrop.announceForAccessibility(announcement)
         return true
     }
     fun hide() {
         blurListener?.let(manager::removeCrossWindowBlurEnabledListener)
         blurListener = null
-        view?.let { if (it.isAttachedToWindow) manager.removeView(it) }
+        view?.let { it.animate().cancel();if (it.isAttachedToWindow) runCatching {manager.removeView(it)} }
         view = null
     }
 }
