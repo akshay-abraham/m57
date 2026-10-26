@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 package com.lyra.blocker
 
 /** Identify our App info page, without treating the app list/search as App info. */

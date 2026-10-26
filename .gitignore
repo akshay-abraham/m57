@@ -4,3 +4,12 @@
 local.properties
 *.jks
 *.keystore
+
+# Private working notes remain local; source and build docs are published.
+docs/prompt.md
+docs/lyra-todo-snapshot.md
+docs/implementation.md
+.env
+.env.*
+*.apk
+*.aab

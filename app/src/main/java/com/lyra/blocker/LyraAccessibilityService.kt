@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: (GPL-3.0-only AND AGPL-3.0-only)
 // Curbox's event-driven app/keyword blocking, reduced to the Lyra redirect policy.
 package com.lyra.blocker
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 package com.lyra.blocker
 
 /** Pure policy. Never match arbitrary chat text or the WhatsApp chat-list AI shortcut. */

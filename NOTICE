@@ -22,11 +22,11 @@ AI catalog and dismissible YouTube Shorts reminders. ShortsPolicy's visible
 player IDs are adapted from Curbox hardcoded/ReelAppConfig.youtubeScript.
 Bundled Android icon copies have been recolored orange for this version.
 
-The Android fork in this directory, including Lyra modifications and the bundled
-Lyra icon copies, is provided under GPL-3.0-only. The original assets and the
-separate web application elsewhere in this repository retain their existing
-terms. The repository-root proprietary notice does not apply to this directory.
-No trademark rights are granted by this license.
+Original M57 work is now AGPL-3.0-only. Curbox-derived portions retain GPLv3;
+mixed files carry both applicable terms under the licenses' section 13
+combination provisions. See LICENSING.md for the component map. Original
+assets and the separate Lyra web application retain their existing terms.
+No trademark rights are granted. All upstream attribution is preserved.
 
 Version 0.3.0 renames the Android application to M57, adds a guard for its own
 App info page with PIN-authorized temporary access, and includes a PWA setup
@@ -37,3 +37,32 @@ When distributing an APK, also provide its corresponding source, build scripts,
 this notice and license, including your modifications, as required by GPLv3.
 An unversioned link to upstream Curbox does not substitute for the source of the
 modified Lyra APK. The in-app licenses screen includes a copy of the GPL text.
+
+Version 0.4.0 adds a separate administrator navigation shell, a scroll-aware
+three-tab dock, full-screen password setup/unlock with verified legacy-PIN
+migration, administrator pause schedules and escalating failed-login waits.
+The standalone project retains the existing package identity and GPL notices.
+Android build and real-device verification are pending; planned category pages
+do not imply family filtering or expanded Reels support is implemented.
+
+Version 0.4.0 also adds an accessibility-detail settings guard and optional
+manufacturer-specific background setup for Samsung, Xiaomi, Oppo, Vivo, Realme
+and OnePlus. BackgroundAccess.kt adapts OEM activity entry points from Curbox's
+hardcoded/OemAutostartIntents.kt. Native Android battery-exemption requests are
+paired with OEM settings fallbacks and supplementary dontkillmyapp.com guides.
+These native flows still require build and device verification.
+
+Version 0.5.0 adds configurable StevenBlack hosts-list downloads, category and
+exception controls, atomic cached rules, JobScheduler updates, local UDP DNS
+VPN filtering and browser-domain interventions. BrowserDomains.java adapts
+Curbox's hardcoded/BrowserUrlBarIds.kt package/resource ID catalog. Contributor
+metadata and aggregator MIT terms are in HOSTS-SOURCES.txt and StevenBlack-MIT.txt;
+no hosts domain lists are bundled. Original M57 code is AGPL-3.0-only; Curbox-derived portions retain GPLv3
+as described in LICENSING.md. Android/network/device acceptance
+checks remain outstanding.
+
+Licensing update on 26 October 2026: original M57 material is AGPL-3.0-only,
+with inherited GPLv3 and Apache notices preserved. Full AGPL, GPL, Apache and
+StevenBlack MIT texts are supplied. Credit for the hosts aggregator goes to
+Steven Black and the StevenBlack/hosts contributors; individual list sources
+retain their own terms. See HOSTS-SOURCES.txt in app assets and LICENSING.md.

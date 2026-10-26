@@ -1,0 +1,170 @@
+StevenBlack/hosts source metadata snapshot
+Reviewed 26 October 2026 at upstream checkout 7df0d76.
+Aggregator code: MIT. Contributing lists retain their own terms.
+This file contains attribution metadata, not bundled domain lists.
+
+BASE
+
+Mitchell Krog's - Badd Boyz Hosts
+Source: https://github.com/mitchellkrogza/Badd-Boyz-Hosts
+Download: https://raw.githubusercontent.com/mitchellkrogza/Badd-Boyz-Hosts/master/hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/Badd-Boyz-Hosts/update.json
+
+KADhosts
+Source: https://kadantiscam.netlify.app/
+Download: https://raw.githubusercontent.com/FiltersHeroes/KADhosts/master/KADhosts.txt
+Terms reported upstream: CC BY-SA 4.0
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/KADhosts/update.json
+
+Steven Black's ad-hoc list
+Source: https://github.com/StevenBlack/hosts/blob/master/data/StevenBlack/hosts
+Download: https://raw.githubusercontent.com/StevenBlack/hosts/master/data/StevenBlack/hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/StevenBlack/update.json
+
+URLHaus
+Source: https://urlhaus.abuse.ch/
+Download: https://urlhaus.abuse.ch/downloads/hostfile/
+Terms reported upstream: CC0
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/URLHaus/update.json
+
+UncheckyAds
+Source: https://github.com/FadeMind/hosts.extras
+Download: https://raw.githubusercontent.com/FadeMind/hosts.extras/master/UncheckyAds/hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/UncheckyAds/update.json
+
+AdAway
+Source: https://adaway.org/
+Download: https://raw.githubusercontent.com/AdAway/adaway.github.io/master/hosts.txt
+Terms reported upstream: CC BY 3.0
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/adaway.org/update.json
+
+add.2o7Net
+Source: https://github.com/FadeMind/hosts.extras
+Download: https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.2o7Net/hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/add.2o7Net/update.json
+
+add.Dead
+Source: https://github.com/FadeMind/hosts.extras
+Download: https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Dead/hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/add.Dead/update.json
+
+add.Risk
+Source: https://github.com/FadeMind/hosts.extras
+Download: https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Risk/hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/add.Risk/update.json
+
+add.Spam
+Source: https://github.com/FadeMind/hosts.extras
+Download: https://raw.githubusercontent.com/FadeMind/hosts.extras/master/add.Spam/hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/add.Spam/update.json
+
+hostsVN
+Source: https://github.com/bigdargon/hostsVN
+Download: https://raw.githubusercontent.com/bigdargon/hostsVN/master/option/hosts-VN
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/hostsVN/update.json
+
+minecraft-hosts
+Source: https://github.com/jamiemansfield/minecraft-hosts
+Download: https://raw.githubusercontent.com/jamiemansfield/minecraft-hosts/master/lists/tracking.txt
+Terms reported upstream: CC0-1.0
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/minecraft-hosts/update.json
+
+MVPS hosts file
+Source: https://winhelp2002.mvps.org/
+Download: https://winhelp2002.mvps.org/hosts.txt
+Terms reported upstream: CC BY-NC-SA 4.0
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/mvps.org/update.json
+
+Dan Pollock – [someonewhocares](https://someonewhocares.org/)
+Source: https://someonewhocares.org/hosts/
+Download: https://someonewhocares.org/hosts/zero/hosts
+Terms reported upstream: non-commercial with attribution
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/someonewhocares.org/update.json
+
+Tiuxo hostlist - ads
+Source: https://github.com/tiuxo/hosts
+Download: https://raw.githubusercontent.com/tiuxo/hosts/master/ads
+Terms reported upstream: CC BY 4.0
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/tiuxo/update.json
+
+yoyo.org
+Source: https://pgl.yoyo.org/adservers/
+Download: https://pgl.yoyo.org/adservers/serverlist.php?hostformat=hosts&mimetype=plaintext&useip=0.0.0.0
+Terms reported upstream: Not specified; consult source
+Metadata: https://github.com/StevenBlack/hosts/blob/master/data/yoyo.org/update.json
+
+ADULT
+
+BigDargon's adult domain blocking hosts file
+Source: https://github.com/bigdargon/hostsVN/
+Download: https://raw.githubusercontent.com/bigdargon/hostsVN/master/extensions/adult/hosts-VN
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/porn/bigdargon/update.json
+
+brijrajparmar27 - pornography
+Source: https://github.com/brijrajparmar27/host-sources
+Download: https://raw.githubusercontent.com/brijrajparmar27/host-sources/master/Porn/hosts
+Terms reported upstream: CC BY 4.0
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/porn/brijrajparmar27/update.json
+
+pornhosts -- a consolidated anti porn hosts file
+Source: https://github.com/Clefspeare13/pornhosts
+Download: https://raw.githubusercontent.com/StevenBlack/hosts/master/extensions/porn/clefspeare13/hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/porn/clefspeare13/update.json
+
+Sinfonietta's porn blocking hosts file
+Source: https://github.com/Sinfonietta/hostfiles
+Download: https://raw.githubusercontent.com/Sinfonietta/hostfiles/master/pornography-hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/porn/sinfonietta/update.json
+
+Sinfonietta's snuff-site blocking hosts file
+Source: https://github.com/Sinfonietta/hostfiles
+Download: https://raw.githubusercontent.com/Sinfonietta/hostfiles/master/snuff-hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/porn/sinfonietta-snuff/update.json
+
+Tiuxo hostlist - pornography
+Source: https://github.com/tiuxo/hosts
+Download: https://raw.githubusercontent.com/tiuxo/hosts/master/porn
+Terms reported upstream: CC BY 4.0
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/porn/tiuxo/update.json
+
+GAMBLING
+
+BigDargon's gambling domain blocking hosts file
+Source: https://github.com/bigdargon/hostsVN/
+Download: https://raw.githubusercontent.com/bigdargon/hostsVN/master/extensions/gambling/hosts-VN
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/gambling/bigdargon/update.json
+
+Sinfonietta's gambling blocking hosts file
+Source: https://github.com/Sinfonietta/hostfiles
+Download: https://raw.githubusercontent.com/Sinfonietta/hostfiles/master/gambling-hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/gambling/sinfonietta/update.json
+
+SOCIAL
+
+Sinfonietta's social media blocking hosts file
+Source: https://github.com/Sinfonietta/hostfiles
+Download: https://raw.githubusercontent.com/Sinfonietta/hostfiles/master/social-hosts
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/social/sinfonietta/update.json
+
+FAKENEWS
+
+Fake News
+Source: https://github.com/marktron/fakenews
+Download: https://raw.githubusercontent.com/marktron/fakenews/master/fakenews
+Terms reported upstream: MIT
+Metadata: https://github.com/StevenBlack/hosts/blob/master/extensions/fakenews/update.json
