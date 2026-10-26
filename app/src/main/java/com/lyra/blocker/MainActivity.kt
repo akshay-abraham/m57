@@ -629,7 +629,11 @@ class MainActivity : Activity() {
     private fun showLicenses() {
         val license = listOf("NOTICE", "AGPL-3.0-only.txt", "COPYING", "Apache-2.0.txt", "StevenBlack-MIT.txt", "HOSTS-SOURCES.txt").joinToString("\n\n") { file -> assets.open(file).bufferedReader().use { it.readText() } }
         dialog = AlertDialog.Builder(this).setTitle("${getString(R.string.app_name)} · ${packageManager.getPackageInfo(packageName, 0).versionName}")
-            .setMessage("M57 · GNU AGPL v3\nCurbox-derived portions · GPL v3\nHosts aggregator · Steven Black and contributors · MIT, with individual list terms retained\nhttps://github.com/StevenBlack/hosts\nhttps://github.com/curbox-app/curbox-android\n\n$license")
+            .setMessage("Source: ${BuildConfig.SOURCE_URL}\n${if(BuildConfig.SOURCE_REF.isBlank()) "Unversioned local build" else "Commit ${BuildConfig.SOURCE_REF}"}\n\nM57 · GNU AGPL v3\nCurbox-derived portions · GPL v3\nHosts aggregator · Steven Black and contributors · MIT, with individual list terms retained\nhttps://github.com/StevenBlack/hosts\nhttps://github.com/curbox-app/curbox-android\n\n$license")
+            .setNeutralButton("View source") { _, _ ->
+                if (unlocked) store.allowAppInfoAccess()
+                runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.SOURCE_URL))) }
+            }
             .setPositiveButton("Close", null).show().also(LyraUi::styleDialog)
     }
     private fun showPwaGuide(notFound: Boolean = false, destination: String = store.destination) {

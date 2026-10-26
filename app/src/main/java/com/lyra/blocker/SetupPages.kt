@@ -72,6 +72,9 @@ class SetupPages(private val activity:Activity,private val authorised:()->Boolea
             else->{
                 page.addView(LyraUi.text(activity,"Choose which AI apps, video spaces and family website categories to protect. Family VPN and browser controls are separate and stay off until configured. Every setting remains available in your administrator space.",15f,LyraUi.muted))
                 page.addView(LyraUi.text(activity,"M57 is open source so anyone can inspect, vet and report problems in the code. Source access supports review; it does not replace device testing or promise perfect protection.",15f,LyraUi.muted))
+                page.addView(LyraUi.link(activity,"Inspect this build’s source") {
+                    if(authorised()){store.allowAppInfoAccess();activity.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(BuildConfig.SOURCE_URL)))}
+                })
                 page.addView(LyraUi.button(activity,"Finish setup"){
                     if(!authorised())return@button
                     if(!accessible()){store.setupStep=0;navigate(AdminPage.SETUP)}else{store.setupComplete=true;navigate(AdminPage.OVERVIEW)}

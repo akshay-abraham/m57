@@ -157,7 +157,7 @@ class LyraAccessibilityService : AccessibilityService(), SharedPreferences.OnSha
         val nativeVideo=MediaPolicy.nativePlatform(activePackage,mediaIds,facebookViewer)
         if(nativeVideo!=null&&videoEnabled(nativeVideo))return Target(activePackage,MediaPolicy.LABELS[nativeVideo]?:"Short videos",reminderOnly=true,videoKey=nativeVideo)
         val browserLabels = if (activePackage in BrowserDomains.BROWSERS) collectLabels(root, true) else emptyList()
-        if (store.repoGuard) for (item in browserLabels) {
+        if (store.repoGuard && store.appInfoAccessRemaining == 0L) for (item in browserLabels) {
             if (BrowserDomains.host(activePackage,item.id,item.text) != null && HandoffPolicy.repositoryAddress(item.text))
                 return Target(activePackage,"M57 source repository",familyCategory="source")
         }
