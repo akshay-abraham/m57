@@ -1,0 +1,39 @@
+M57 — Lyra companion and reduced Curbox fork
+
+Upstream: https://github.com/curbox-app/curbox-android
+Revision: 55ae8167c2e823fbf6d4cc44cdab7ae4a1cff9f3
+Upstream license: GNU General Public License, version 3 (LICENSE).
+Upstream authors and copyright holders: Curbox contributors; their rights remain
+with them. No upstream source copyright notices have been removed.
+
+Modified on 2026-10-23 for Lyra by Akshay K Rooben Abraham and contributors.
+
+KeywordMatcher.kt is copied from Curbox's utils/KeywordMatcher.kt with the
+package declaration changed and provenance added. accessibility_service.xml is
+adapted from Curbox's app_blocker_service_config.xml. Curbox's event-driven
+application/keyword blocker design is reduced to an AI-only redirect service;
+the service, policy, native UI, PIN settings and managed-device controls are Lyra
+modifications. gradlew, gradlew.bat, gradle-wrapper.jar and wrapper properties
+are retained from the upstream Gradle setup. Gradle wrapper components retain
+their Apache-2.0 licensing; see LICENSES/Apache-2.0.txt.
+
+Version 0.2.0 adds a warm glass UI, randomized local popup messages, an expanded
+AI catalog and dismissible YouTube Shorts reminders. ShortsPolicy's visible
+player IDs are adapted from Curbox hardcoded/ReelAppConfig.youtubeScript.
+Bundled Android icon copies have been recolored orange for this version.
+
+The Android fork in this directory, including Lyra modifications and the bundled
+Lyra icon copies, is provided under GPL-3.0-only. The original assets and the
+separate web application elsewhere in this repository retain their existing
+terms. The repository-root proprietary notice does not apply to this directory.
+No trademark rights are granted by this license.
+
+Version 0.3.0 renames the Android application to M57, adds a guard for its own
+App info page with PIN-authorized temporary access, and includes a PWA setup
+guide and installed-PWA selector. The package ID and existing settings remain
+compatible with earlier Lyra Blocker builds.
+
+When distributing an APK, also provide its corresponding source, build scripts,
+this notice and license, including your modifications, as required by GPLv3.
+An unversioned link to upstream Curbox does not substitute for the source of the
+modified Lyra APK. The in-app licenses screen includes a copy of the GPL text.

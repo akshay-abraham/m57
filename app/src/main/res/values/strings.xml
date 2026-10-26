@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">M57</string>
+    <string name="accessibility_description">M57 redirects supported AI apps and detected Meta AI screens to Lyra, and shows a dismissible reminder on YouTube Shorts. It also redirects its own detected App info page to Lyra while protection is active; PIN-protected settings allow temporary maintenance access. Reads app identity, supported browser address bars, screen labels, Settings header/action IDs and Shorts player IDs locally. Does not save or send messages or video content. Enable only if you agree to this access. Android Accessibility settings can revoke it.</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Reduced from Curbox app_blocker_service_config.xml; see NOTICE. -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewClicked|typeWindowsChanged|typeViewScrolled"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagReportViewIds|flagRetrieveInteractiveWindows"
+    android:notificationTimeout="100"
+    android:canRetrieveWindowContent="true"
+    android:isAccessibilityTool="false"
+    android:settingsActivity="com.lyra.blocker.MainActivity"
+    android:description="@string/accessibility_description" />
