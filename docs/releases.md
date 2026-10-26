@@ -6,6 +6,22 @@ not mean an APK has been built or published.
 
 ## Local checks
 
+On Linux x86_64, install the user-local JDK 17 and Android toolchain with:
+
+```sh
+bash scripts/setup-android.sh
+source ~/.config/m57/android-env.sh
+bash scripts/check-android.sh
+```
+
+The setup verifies archive checksums, uses the official Temurin and Google
+downloads, and asks you to review Android SDK licenses. It keeps system Java
+unchanged. The check script runs debug and release unit tests, lint and APK
+assembly with two workers. Without release signing environment variables, its
+release APK is unsigned; signing and certificate verification stay separate.
+Full lint reports are under `app/build/reports/`. A failing check does not create
+or push a release tag.
+
 Use JDK 17, Android SDK platform 35 and build-tools 35.0.0. Set `ANDROID_HOME`
 to the installed SDK. Run:
 
