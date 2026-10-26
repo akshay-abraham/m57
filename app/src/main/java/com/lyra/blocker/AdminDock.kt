@@ -57,6 +57,13 @@ class AdminDock(context: Context, selected: AdminTab, onSelect: (AdminTab) -> Un
 }
 
 private class DockIcon(context: Context, private val tab: AdminTab, color: Int) : View(context) {
+    private val homePath = Path().apply {
+        moveTo(3f, 11f); lineTo(12f, 3f); lineTo(21f, 11f)
+        moveTo(5f, 10f); lineTo(5f, 21f); lineTo(10f, 21f)
+        lineTo(10f, 15f); lineTo(14f, 15f); lineTo(14f, 21f); lineTo(19f, 21f); lineTo(19f, 10f)
+    }
+    private val corners = floatArrayOf(4f, 14f)
+    private val sliderPositions = floatArrayOf(9f, 16f, 7f)
     private val pen = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         this.color = color; style = Paint.Style.STROKE; strokeWidth = 1.7f
         strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
@@ -68,18 +75,14 @@ private class DockIcon(context: Context, private val tab: AdminTab, color: Int) 
         canvas.scale(width / 24f, height / 24f)
         when (tab) {
             AdminTab.OVERVIEW -> {
-                val path = Path().apply {
-                    moveTo(3f, 11f); lineTo(12f, 3f); lineTo(21f, 11f)
-                    moveTo(5f, 10f); lineTo(5f, 21f); lineTo(10f, 21f)
-                    lineTo(10f, 15f); lineTo(14f, 15f); lineTo(14f, 21f); lineTo(19f, 21f); lineTo(19f, 10f)
-                }
-                canvas.drawPath(path, pen)
+                canvas.drawPath(homePath, pen)
             }
             AdminTab.CONTROLS -> {
-                for (x in listOf(4f, 14f)) for (y in listOf(4f, 14f)) canvas.drawRoundRect(x, y, x + 6, y + 6, 1.5f, 1.5f, pen)
+                for (x in corners) for (y in corners) canvas.drawRoundRect(x, y, x + 6, y + 6, 1.5f, 1.5f, pen)
             }
             AdminTab.SETTINGS -> {
-                for ((y, x) in listOf(6f to 9f, 12f to 16f, 18f to 7f)) {
+                for (index in sliderPositions.indices) {
+                    val y=6f*(index+1);val x=sliderPositions[index]
                     canvas.drawLine(3f, y, x - 2.5f, y, pen)
                     canvas.drawLine(x + 2.5f, y, 21f, y, pen)
                     canvas.drawCircle(x, y, 2.5f, pen)
