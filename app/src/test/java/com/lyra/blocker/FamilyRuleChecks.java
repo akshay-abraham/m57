@@ -4,6 +4,7 @@ package com.lyra.blocker;
 import com.lyra.blocker.family.BrowserDomains;
 import com.lyra.blocker.family.HostRules;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -19,7 +20,7 @@ public final class FamilyRuleChecks {
                 try (java.io.Reader reader = Files.newBufferedReader(root.resolve(list))) {
                     Set<String> domains = HostRules.parseHosts(reader);
                     check(domains.size() >= 100, "Real list unexpectedly empty");
-                    String text = Files.readString(root.resolve(list));
+                    String text = new String(Files.readAllBytes(root.resolve(list)), StandardCharsets.UTF_8);
                     check(HostRules.validatedDownload(text, 0).size() == domains.size(), "Real download validator disagreed with parser");
                     java.util.regex.Matcher declared = java.util.regex.Pattern.compile("(?m)^# Number of unique domains: ([0-9,]+)").matcher(text);
                     check(declared.find(), "Missing real-list count header");

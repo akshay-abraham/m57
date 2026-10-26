@@ -48,6 +48,15 @@ the [device acceptance checklist](../DEVICE_TESTS.md).
 The repository-publication result is recorded in the local Lyra work log. A
 prepared workflow is not proof of a successful GitHub run or published release.
 
+## First GitHub build and 0.6.1 correction
+
+Akshay created the public repository and ran the v0.6.0 release workflow. The
+provided CI log confirms the debug app's Kotlin and Java compilation completed.
+Unit-test Java compilation then failed on `Files.readString`, which is absent
+from the configured Android API. The helper now uses explicit UTF-8 decoding of
+`Files.readAllBytes`. Version 0.6.1 / code 7 provides a new release tag without
+rewriting v0.6.0. Full CI and real-device acceptance are still outstanding.
+
 Publication was attempted using `gh repo create akshay-abraham/m57 --public
 --source=. --remote=origin --push`; the CLI could not connect to api.github.com.
 No origin/public repository, tag or release was created by that attempt. Release
